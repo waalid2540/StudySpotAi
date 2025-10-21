@@ -16,9 +16,7 @@ services:
       - key: API_VERSION
         value: v1
       - key: DATABASE_URL
-        fromDatabase:
-          name: studyspot-ai-db
-          property: connectionString
+        sync: false  # You'll manually add your existing database URL in Render dashboard
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET
@@ -87,8 +85,13 @@ services:
         sync: false
     autoDeploy: true
 
-databases:
-  - name: studyspot-ai-db
-    databaseName: studyspot_ai_production
-    plan: free
-    region: oregon
+# Database Configuration
+# Option 1: Create new database (uncomment if you want a separate database)
+# databases:
+#   - name: studyspot-learning-db
+#     databaseName: studyspot_learning_production
+#     plan: free
+#     region: oregon
+
+# Option 2: Use existing database (recommended if you already have one)
+# You'll manually set DATABASE_URL in Render dashboard to point to your existing database
