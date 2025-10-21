@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { gamificationAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { useUserStats } from '../hooks/useUserStats';
 import {
   User,
   Mail,
@@ -42,22 +44,33 @@ interface UserStats {
 }
 
 const ProfilePage = () => {
+  const { user } = useAuth();
+  const { stats: userStats, loading: statsLoading } = useUserStats();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'security'>('profile');
   const [loading, setLoading] = useState(true);
 
   const [profile, setProfile] = useState<UserProfile>({
-    name: 'Student User',
-    email: 'student@learninghub.com',
-    phone: '+1 (555) 123-4567',
+    name: 'User',
+    email: '',
+    phone: '',
     location: '',
-    bio: 'Passionate learner focused on continuous improvement and academic excellence.',
+    bio: '',
     avatar: '',
-    joinDate: '2024-01-15',
+    joinDate: new Date().toISOString().split('T')[0],
     role: 'Student',
   });
 
-  const [editedProfile, setEditedProfile] = useState(profile);
+  const [editedProfile, setEditedProfile] = useState<UserProfile>({
+    name: 'User',
+    email: '',
+    phone: '',
+    location: '',
+    bio: '',
+    avatar: '',
+    joinDate: new Date().toISOString().split('T')[0],
+    role: 'Student',
+  });
   const [stats, setStats] = useState<UserStats>({
     totalPoints: 0,
     level: 1,
@@ -83,34 +96,44 @@ const ProfilePage = () => {
     darkMode: false,
   });
 
+  // Update profile when user changes
   useEffect(() => {
-    loadProfileData();
-  }, []);
+    if (user) {
+      const updatedProfile = {
+        name: user.displayName || user.email?.split('@')[0] || 'User',
+        email: user.email || '',
+        phone: '',
+        location: '',
+        bio: user.role === 'parent'
+          ? 'Parent monitoring student progress and supporting learning.'
+          : user.role === 'admin'
+          ? 'Administrator managing the platform.'
+          : 'Passionate learner focused on continuous improvement and academic excellence.',
+        avatar: '',
+        joinDate: user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        role: user.role === 'parent' ? 'Parent' : user.role === 'admin' ? 'Admin' : 'Student',
+      };
+      setProfile(updatedProfile);
+      setEditedProfile(updatedProfile);
+    }
+  }, [user]);
 
-  const loadProfileData = async () => {
-    try {
-      const pointsRes = await gamificationAPI.getPoints().catch(() => ({
-        data: { totalPoints: 0, level: 1, rank: 0 }
-      }));
-      const badgesRes = await gamificationAPI.getEarnedBadges().catch(() => ({
-        data: { badges: [] }
-      }));
+  useEffect(() => {
+    if (userStats) {
+      const badgesCount = userStats.achievements?.length || 0;
 
       setStats({
-        totalPoints: pointsRes.data.totalPoints || 0,
-        level: pointsRes.data.level || 1,
-        rank: pointsRes.data.rank || 0,
-        homeworkCompleted: 0,
-        quizzesTaken: 0,
-        badges: badgesRes.data.badges?.length || 0,
-        currentStreak: 0,
+        totalPoints: userStats.totalPoints || 0,
+        level: userStats.level || 1,
+        rank: userStats.rank || 0,
+        homeworkCompleted: userStats.homeworkCompleted || 0,
+        quizzesTaken: userStats.quizzesCompleted || 0,
+        badges: badgesCount,
+        currentStreak: userStats.streak || 0,
       });
-    } catch (error) {
-      console.error('Failed to load profile data:', error);
-    } finally {
       setLoading(false);
     }
-  };
+  }, [userStats]);
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -168,20 +191,20 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 dark:bg-gray-900 min-h-screen p-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8 rounded-xl shadow-lg">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 text-white p-8 rounded-xl shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+              <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
                 {profile.avatar ? (
                   <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   <User className="h-12 w-12 text-primary-600" />
                 )}
               </div>
-              <label className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg cursor-pointer hover:bg-gray-100 transition-colors">
+              <label className="absolute bottom-0 right-0 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg cursor-pointer hover:bg-gray-100 dark:bg-gray-800 transition-colors">
                 <Camera className="h-4 w-4 text-primary-600" />
                 <input
                   type="file"
@@ -195,10 +218,10 @@ const ProfilePage = () => {
               <h1 className="text-3xl font-bold">{profile.name}</h1>
               <p className="text-lg opacity-90">{profile.email}</p>
               <div className="flex items-center gap-2 mt-2">
-                <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
+                <span className="bg-white dark:bg-gray-800/20 px-3 py-1 rounded-full text-sm font-medium">
                   {profile.role}
                 </span>
-                <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
+                <span className="bg-white dark:bg-gray-800/20 px-3 py-1 rounded-full text-sm font-medium">
                   Level {stats.level}
                 </span>
               </div>
@@ -206,7 +229,7 @@ const ProfilePage = () => {
           </div>
           <button
             onClick={handleEditToggle}
-            className="flex items-center gap-2 bg-white text-primary-600 px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 text-primary-600 px-6 py-3 rounded-lg hover:bg-gray-100 dark:bg-gray-800 transition-colors font-medium"
           >
             {isEditing ? (
               <>
@@ -223,25 +246,8 @@ const ProfilePage = () => {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {statsCards.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                <p className="mt-2 text-3xl font-bold text-gray-900">{stat.value}</p>
-              </div>
-              <div className={`rounded-lg ${stat.color} p-3`}>
-                <stat.icon className="h-6 w-6 text-white" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-gray-200">
+      <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700 dark:border-gray-700">
         <button
           onClick={() => setActiveTab('profile')}
           className={`pb-4 px-4 font-medium transition-colors ${
@@ -278,68 +284,49 @@ const ProfilePage = () => {
       {activeTab === 'profile' && (
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Personal Information */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Personal Information</h2>
+          <div className="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white dark:text-white mb-6">Personal Information</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Full Name
                 </label>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
                   <User className="h-5 w-5 text-gray-400" />
                   {isEditing ? (
                     <input
                       type="text"
                       value={editedProfile.name}
                       onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
-                      className="flex-1 bg-white px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="flex-1 bg-white dark:bg-gray-800 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
                   ) : (
-                    <span className="text-gray-900">{profile.name}</span>
+                    <span className="text-gray-900 dark:text-white">{profile.name}</span>
                   )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Email Address
                 </label>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
                   <Mail className="h-5 w-5 text-gray-400" />
                   {isEditing ? (
                     <input
                       type="email"
                       value={editedProfile.email}
                       onChange={(e) => setEditedProfile({ ...editedProfile, email: e.target.value })}
-                      className="flex-1 bg-white px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="flex-1 bg-white dark:bg-gray-800 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
                   ) : (
-                    <span className="text-gray-900">{profile.email}</span>
+                    <span className="text-gray-900 dark:text-white">{profile.email}</span>
                   )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Phone className="h-5 w-5 text-gray-400" />
-                  {isEditing ? (
-                    <input
-                      type="tel"
-                      value={editedProfile.phone}
-                      onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
-                      className="flex-1 bg-white px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  ) : (
-                    <span className="text-gray-900">{profile.phone}</span>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Bio
                 </label>
                 {isEditing ? (
@@ -347,10 +334,10 @@ const ProfilePage = () => {
                     value={editedProfile.bio}
                     onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
                     rows={4}
-                    className="w-full p-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 ) : (
-                  <p className="text-gray-900 p-3 bg-gray-50 rounded-lg">{profile.bio}</p>
+                  <p className="text-gray-900 dark:text-white p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">{profile.bio}</p>
                 )}
               </div>
 
@@ -367,15 +354,15 @@ const ProfilePage = () => {
           </div>
 
           {/* Account Details */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Account Details</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Account Details</h2>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between p-4 bg-blue-100 dark:bg-blue-900/20 rounded-lg border border-blue-300 dark:border-blue-700">
                 <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-blue-600" />
+                  <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Member Since</p>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Member Since</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
                       {new Date(profile.joinDate).toLocaleDateString('en-US', {
                         month: 'long',
                         year: 'numeric'
@@ -385,32 +372,32 @@ const ProfilePage = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+              <div className="flex items-center justify-between p-4 bg-green-100 dark:bg-green-900/20 rounded-lg border border-green-300 dark:border-green-700">
                 <div className="flex items-center gap-3">
-                  <BookOpen className="h-5 w-5 text-green-600" />
+                  <BookOpen className="h-5 w-5 text-green-600 dark:text-green-400" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Homework Completed</p>
-                    <p className="text-lg font-bold text-gray-900">{stats.homeworkCompleted}</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Homework Completed</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.homeworkCompleted}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+              <div className="flex items-center justify-between p-4 bg-purple-100 dark:bg-purple-900/20 rounded-lg border border-purple-300 dark:border-purple-700">
                 <div className="flex items-center gap-3">
-                  <Trophy className="h-5 w-5 text-purple-600" />
+                  <Trophy className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Quizzes Taken</p>
-                    <p className="text-lg font-bold text-gray-900">{stats.quizzesTaken}</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Quizzes Taken</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.quizzesTaken}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+              <div className="flex items-center justify-between p-4 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg border border-yellow-300 dark:border-yellow-700">
                 <div className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-yellow-600" />
+                  <CheckCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Current Streak</p>
-                    <p className="text-lg font-bold text-gray-900">{stats.currentStreak} days</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Current Streak</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.currentStreak} days</p>
                   </div>
                 </div>
               </div>
@@ -421,13 +408,13 @@ const ProfilePage = () => {
 
       {/* Preferences Tab */}
       {activeTab === 'preferences' && (
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Learning Preferences</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Learning Preferences</h2>
 
           <div className="space-y-6">
             {/* Learning Pace */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Preferred Learning Pace
               </label>
               <div className="grid grid-cols-3 gap-4">
@@ -449,14 +436,14 @@ const ProfilePage = () => {
 
             {/* Notifications */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <Bell className="h-5 w-5" />
                 Notification Settings
               </h3>
               <div className="space-y-3">
                 {Object.entries(notifications).map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <span className="text-gray-700 font-medium">
+                  <div key={key} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">
                       {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                     </span>
                     <button
@@ -481,43 +468,43 @@ const ProfilePage = () => {
 
       {/* Security Tab */}
       {activeTab === 'security' && (
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
             <Lock className="h-6 w-6" />
             Security Settings
           </h2>
 
           <div className="space-y-6">
-            <div className="p-6 bg-gray-50 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Change Password</h3>
+            <div className="p-6 bg-gray-50 dark:bg-gray-900 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Change Password</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Current Password
                   </label>
                   <input
                     type="password"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
                     placeholder="Enter current password"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     New Password
                   </label>
                   <input
                     type="password"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
                     placeholder="Enter new password"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Confirm New Password
                   </label>
                   <input
                     type="password"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
                     placeholder="Confirm new password"
                   />
                 </div>

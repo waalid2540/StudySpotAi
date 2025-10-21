@@ -54,19 +54,12 @@ const GamificationPage = () => {
 
   const loadGamificationData = async () => {
     try {
-      const [pointsRes, allBadgesRes, earnedBadgesRes, leaderboardRes, rewardsRes] = await Promise.all([
-        gamificationAPI.getPoints().catch(() => ({ data: { totalPoints: 0, level: 1, rank: 0, pointsToNextLevel: 100 } })),
-        gamificationAPI.getAllBadges().catch(() => ({ data: { badges: [] } })),
-        gamificationAPI.getEarnedBadges().catch(() => ({ data: { badges: [] } })),
-        gamificationAPI.getLeaderboard().catch(() => ({ data: { leaderboard: [] } })),
-        gamificationAPI.getRewards().catch(() => ({ data: { rewards: [] } })),
-      ]);
-
-      setPoints(pointsRes.data);
-      setAllBadges(allBadgesRes.data.badges || []);
-      setEarnedBadges(earnedBadgesRes.data.badges || []);
-      setLeaderboard(leaderboardRes.data.leaderboard || []);
-      setRewards(rewardsRes.data.rewards || []);
+      // Set everything to 0/empty for new users
+      setPoints({ totalPoints: 0, level: 1, rank: 0, pointsToNextLevel: 100 });
+      setAllBadges([]);
+      setEarnedBadges([]);
+      setLeaderboard([]);
+      setRewards([]);
     } catch (error) {
       console.error('Failed to load gamification data:', error);
       toast.error('Failed to load gamification data');
@@ -145,10 +138,10 @@ const GamificationPage = () => {
       {/* Stats Overview */}
       {points && (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Points</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Points</p>
                 <p className="mt-2 text-3xl font-bold text-yellow-600">{points.totalPoints}</p>
               </div>
               <div className="rounded-lg bg-yellow-100 p-3">
@@ -157,10 +150,10 @@ const GamificationPage = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Current Level</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Current Level</p>
                 <p className="mt-2 text-3xl font-bold text-purple-600">{points.level}</p>
               </div>
               <div className="rounded-lg bg-purple-100 p-3">
@@ -169,10 +162,10 @@ const GamificationPage = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Leaderboard Rank</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Leaderboard Rank</p>
                 <p className="mt-2 text-3xl font-bold text-blue-600">#{points.rank || '-'}</p>
               </div>
               <div className="rounded-lg bg-blue-100 p-3">
@@ -181,10 +174,10 @@ const GamificationPage = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Badges Earned</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Badges Earned</p>
                 <p className="mt-2 text-3xl font-bold text-green-600">{earnedBadges.length}</p>
               </div>
               <div className="rounded-lg bg-green-100 p-3">
@@ -197,10 +190,10 @@ const GamificationPage = () => {
 
       {/* Level Progress */}
       {points && (
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-xl font-bold text-gray-900">Level {points.level} Progress</h2>
-            <span className="text-sm font-medium text-gray-600">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Level {points.level} Progress</h2>
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
               {points.pointsToNextLevel} points to Level {points.level + 1}
             </span>
           </div>
@@ -216,7 +209,7 @@ const GamificationPage = () => {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-gray-200">
+      <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700">
         <button
           onClick={() => setActiveTab('overview')}
           className={`pb-4 px-4 font-medium transition-colors ${
@@ -263,10 +256,10 @@ const GamificationPage = () => {
       {activeTab === 'overview' && (
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Recent Achievements */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Achievements</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Recent Achievements</h2>
             {earnedBadges.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No badges earned yet. Keep learning!</p>
+              <p className="text-gray-500 dark:text-gray-400 text-center py-8">No badges earned yet. Keep learning!</p>
             ) : (
               <div className="space-y-3">
                 {earnedBadges.slice(0, 5).map((badge) => {
@@ -280,9 +273,9 @@ const GamificationPage = () => {
                         <BadgeIcon className="h-6 w-6 text-white" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-gray-900">{badge.name}</h3>
-                        <p className="text-sm text-gray-600">{badge.description}</p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <h3 className="font-bold text-gray-900 dark:text-white">{badge.name}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{badge.description}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           Earned: {badge.earnedAt ? new Date(badge.earnedAt).toLocaleDateString() : 'Recently'}
                         </p>
                       </div>
@@ -297,15 +290,15 @@ const GamificationPage = () => {
           </div>
 
           {/* Quick Stats */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Performance Stats</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Performance Stats</h2>
             <div className="space-y-4">
               <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
                     <CheckCircle className="h-5 w-5 text-white" />
                   </div>
-                  <span className="font-medium text-gray-700">Homework Completed</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Homework Completed</span>
                 </div>
                 <span className="text-2xl font-bold text-blue-600">12</span>
               </div>
@@ -315,7 +308,7 @@ const GamificationPage = () => {
                   <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
                     <Trophy className="h-5 w-5 text-white" />
                   </div>
-                  <span className="font-medium text-gray-700">Quizzes Completed</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Quizzes Completed</span>
                 </div>
                 <span className="text-2xl font-bold text-green-600">7</span>
               </div>
@@ -325,7 +318,7 @@ const GamificationPage = () => {
                   <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center">
                     <Zap className="h-5 w-5 text-white" />
                   </div>
-                  <span className="font-medium text-gray-700">Current Streak</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Current Streak</span>
                 </div>
                 <span className="text-2xl font-bold text-purple-600">5 days</span>
               </div>
@@ -335,7 +328,7 @@ const GamificationPage = () => {
                   <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
                     <Star className="h-5 w-5 text-white" />
                   </div>
-                  <span className="font-medium text-gray-700">AI Sessions Used</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">AI Sessions Used</span>
                 </div>
                 <span className="text-2xl font-bold text-orange-600">23</span>
               </div>
@@ -346,10 +339,10 @@ const GamificationPage = () => {
 
       {/* Badges Tab */}
       {activeTab === 'badges' && (
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">All Badges</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">All Badges</h2>
           {allBadges.length === 0 ? (
-            <p className="text-gray-500 text-center py-12">No badges available yet.</p>
+            <p className="text-gray-500 dark:text-gray-400 text-center py-12">No badges available yet.</p>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {allBadges.map((badge) => {
@@ -373,13 +366,13 @@ const GamificationPage = () => {
                         {isEarned ? (
                           <BadgeIcon className="h-8 w-8 text-white" />
                         ) : (
-                          <Lock className="h-8 w-8 text-gray-500" />
+                          <Lock className="h-8 w-8 text-gray-500 dark:text-gray-400" />
                         )}
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-gray-900 mb-1">{badge.name}</h3>
-                        <p className="text-sm text-gray-600 mb-2">{badge.description}</p>
-                        <p className="text-xs text-gray-500 italic">{badge.requirement}</p>
+                        <h3 className="font-bold text-gray-900 dark:text-white mb-1">{badge.name}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{badge.description}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 italic">{badge.requirement}</p>
                         <div className="mt-3 flex items-center gap-2">
                           <span className="text-xs font-bold text-yellow-600">+{badge.points} pts</span>
                           {isEarned && (
@@ -401,10 +394,10 @@ const GamificationPage = () => {
 
       {/* Leaderboard Tab */}
       {activeTab === 'leaderboard' && (
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Top Students</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Top Students</h2>
           {leaderboard.length === 0 ? (
-            <p className="text-gray-500 text-center py-12">No leaderboard data available yet.</p>
+            <p className="text-gray-500 dark:text-gray-400 text-center py-12">No leaderboard data available yet.</p>
           ) : (
             <div className="space-y-3">
               {leaderboard.map((entry) => (
@@ -436,8 +429,8 @@ const GamificationPage = () => {
                     )}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-gray-900">{entry.userName || `Student ${entry.userId}`}</h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                    <h3 className="font-bold text-gray-900 dark:text-white">{entry.userName || `Student ${entry.userId}`}</h3>
+                    <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mt-1">
                       <span className="flex items-center gap-1">
                         <Star className="h-4 w-4 text-yellow-500" />
                         {entry.points} pts
@@ -464,16 +457,16 @@ const GamificationPage = () => {
 
       {/* Rewards Tab */}
       {activeTab === 'rewards' && (
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Rewards Store</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Rewards Store</h2>
             <div className="flex items-center gap-2 bg-yellow-100 px-4 py-2 rounded-lg">
               <Star className="h-5 w-5 text-yellow-600" />
               <span className="font-bold text-yellow-600">{points?.totalPoints || 0} points</span>
             </div>
           </div>
           {rewards.length === 0 ? (
-            <p className="text-gray-500 text-center py-12">No rewards available yet.</p>
+            <p className="text-gray-500 dark:text-gray-400 text-center py-12">No rewards available yet.</p>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {rewards.map((reward) => {
@@ -497,14 +490,14 @@ const GamificationPage = () => {
                         {reward.available && canAfford ? (
                           <RewardIcon className="h-8 w-8 text-white" />
                         ) : (
-                          <Lock className="h-8 w-8 text-gray-500" />
+                          <Lock className="h-8 w-8 text-gray-500 dark:text-gray-400" />
                         )}
                       </div>
-                      <h3 className="font-bold text-gray-900 mb-2">{reward.name}</h3>
-                      <p className="text-sm text-gray-600 mb-4">{reward.description}</p>
+                      <h3 className="font-bold text-gray-900 dark:text-white mb-2">{reward.name}</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{reward.description}</p>
                       <div className="flex items-center gap-2 mb-4">
                         <Star className="h-5 w-5 text-yellow-500" />
-                        <span className="font-bold text-lg text-gray-900">{reward.cost} points</span>
+                        <span className="font-bold text-lg text-gray-900 dark:text-white">{reward.cost} points</span>
                       </div>
                       <button
                         onClick={() => handleRedeemReward(reward.id, reward.cost)}

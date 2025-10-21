@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Bell, Search, User, LogOut, Settings } from 'lucide-react';
+import { Menu, Bell, User, LogOut, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import ThemeToggle from './ThemeToggle';
+import NotificationsCenter from './NotificationsCenter';
+import SearchBar from './SearchBar';
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -12,6 +15,7 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -24,42 +28,38 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+    <header className="sticky top-0 z-10 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
         {/* Left: Menu & Logo */}
         <div className="flex items-center gap-4">
           <button
             onClick={onMenuClick}
-            className="rounded-lg p-2 hover:bg-gray-100 lg:hidden"
+            className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800 lg:hidden"
             aria-label="Toggle menu"
           >
-            <Menu className="h-6 w-6 text-gray-600" />
+            <Menu className="h-6 w-6 text-gray-600 dark:text-gray-400 dark:text-gray-300" />
           </button>
           <div className="hidden items-center gap-2 lg:flex">
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-600 to-secondary-600" />
-            <span className="text-xl font-bold text-gray-900">LearningHub</span>
+            <span className="text-xl font-bold text-gray-900 dark:text-white">LearningHub</span>
           </div>
         </div>
 
         {/* Center: Search (hidden on mobile) */}
         <div className="hidden flex-1 max-w-xl px-8 md:block">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search homework, quizzes..."
-              className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"
-            />
-          </div>
+          <SearchBar />
         </div>
 
         {/* Right: Notifications & Profile */}
         <div className="flex items-center gap-3">
+          <ThemeToggle />
+
           <button
-            className="relative rounded-lg p-2 hover:bg-gray-100"
+            onClick={() => setShowNotifications(true)}
+            className="relative rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
             aria-label="Notifications"
           >
-            <Bell className="h-6 w-6 text-gray-600" />
+            <Bell className="h-6 w-6 text-gray-600 dark:text-gray-300" />
             <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-error-500" />
           </button>
 
@@ -67,7 +67,7 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 rounded-lg p-2 hover:bg-gray-100"
+              className="flex items-center gap-2 rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
               aria-label="User menu"
             >
               {user?.photoURL ? (
@@ -77,7 +77,7 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
                   <User className="h-5 w-5 text-white" />
                 </div>
               )}
-              <span className="hidden font-medium text-gray-700 md:block">
+              <span className="hidden font-medium text-gray-700 dark:text-gray-200 md:block">
                 {user?.displayName || user?.email?.split('@')[0]}
               </span>
             </button>
@@ -89,12 +89,12 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
                   className="fixed inset-0 z-10"
                   onClick={() => setShowUserMenu(false)}
                 />
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
-                  <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="text-sm font-medium text-gray-900">
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-20">
+                  <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
                       {user?.displayName || 'User'}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
                     <p className="text-xs text-primary-600 font-medium mt-1 capitalize">
                       {user?.role}
                     </p>
@@ -105,7 +105,7 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
                       setShowUserMenu(false);
                       navigate('/profile');
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     <Settings className="h-4 w-4" />
                     Profile Settings
@@ -124,6 +124,12 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
           </div>
         </div>
       </div>
+
+      {/* Notifications Center */}
+      <NotificationsCenter
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
     </header>
   );
 };

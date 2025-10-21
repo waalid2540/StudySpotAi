@@ -49,7 +49,7 @@ const AIHomeworkHelper = ({ onClose }: AIHomeworkHelperProps) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-t-xl">
           <div className="flex items-center justify-between">
@@ -74,13 +74,13 @@ const AIHomeworkHelper = ({ onClose }: AIHomeworkHelperProps) => {
           {/* Input Section */}
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Subject
               </label>
               <select
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
               >
                 {subjects.map((s) => (
                   <option key={s} value={s}>
@@ -91,17 +91,17 @@ const AIHomeworkHelper = ({ onClose }: AIHomeworkHelperProps) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Your Question
               </label>
               <textarea
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 placeholder="Enter your homework question here... Be as specific as possible!"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent min-h-32"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent min-h-32"
                 disabled={loading}
               />
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 Example: "Solve for x: 2x + 5 = 15" or "Explain how photosynthesis works"
               </p>
             </div>
@@ -130,21 +130,21 @@ const AIHomeworkHelper = ({ onClose }: AIHomeworkHelperProps) => {
             <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-6 border-2 border-purple-200">
               <div className="flex items-center gap-2 mb-4">
                 <CheckCircle2 className="h-6 w-6 text-green-600" />
-                <h3 className="text-lg font-bold text-gray-900">AI Solution</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">AI Solution</h3>
               </div>
               <div className="prose prose-sm max-w-none">
-                <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+                <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed">
                   {solution}
                 </div>
               </div>
 
               {/* Key Points */}
               {keyPoints.length > 0 && (
-                <div className="mt-4 p-4 bg-white rounded-lg border border-purple-200">
+                <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200">
                   <p className="font-semibold text-purple-900 mb-2">🔑 Key Points:</p>
                   <ul className="space-y-1">
                     {keyPoints.map((point, index) => (
-                      <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
+                      <li key={index} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
                         <span className="text-purple-600">•</span>
                         {point}
                       </li>
@@ -153,10 +153,10 @@ const AIHomeworkHelper = ({ onClose }: AIHomeworkHelperProps) => {
                 </div>
               )}
 
-              <div className="mt-4 p-4 bg-white rounded-lg border border-purple-200">
+              <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200">
                 <div className="flex items-start gap-3">
                   <BookOpen className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-gray-700">
+                  <div className="text-sm text-gray-700 dark:text-gray-300">
                     <p className="font-semibold text-purple-900 mb-1">Learning Tip:</p>
                     <p>Make sure you understand each step before moving forward. Try solving a similar problem on your own to reinforce what you've learned!</p>
                   </div>

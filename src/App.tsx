@@ -15,6 +15,14 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import StudentDashboard from './pages/student/Dashboard';
 import ParentDashboard from './pages/parent/Dashboard';
+import ParentChildren from './pages/parent/Children';
+import ParentMessages from './pages/parent/Messages';
+import ParentReports from './pages/parent/Reports';
+import ParentBilling from './pages/parent/Billing';
+import ParentSettings from './pages/parent/Settings';
+import AdminDashboard from './pages/admin/Dashboard';
+import AdminUsers from './pages/admin/Users';
+import AdminHomework from './pages/admin/Homework';
 import HomeworkPage from './pages/student/Homework';
 import AIChat from './pages/student/AIChat';
 import QuizPage from './pages/student/Quiz';
@@ -51,13 +59,30 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<MainLayout />}>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+              {/* Student Routes */}
               <Route path="/dashboard" element={<StudentDashboard />} />
-              <Route path="/parent-dashboard" element={<ParentDashboard />} />
               <Route path="/homework" element={<HomeworkPage />} />
               <Route path="/ai-chat" element={<AIChat />} />
               <Route path="/quiz" element={<QuizPage />} />
-              <Route path="/analytics" element={<Analytics />} />
               <Route path="/gamification" element={<GamificationPage />} />
+
+              {/* Parent Routes */}
+              <Route path="/parent-dashboard" element={<ParentDashboard />} />
+              <Route path="/parent/children" element={<ParentChildren />} />
+              <Route path="/parent/messages" element={<ParentMessages />} />
+              <Route path="/parent/reports" element={<ParentReports />} />
+              <Route path="/parent/billing" element={<ParentBilling />} />
+              <Route path="/parent/settings" element={<ParentSettings />} />
+
+              {/* Admin Routes */}
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/homework" element={<AdminHomework />} />
+              <Route path="/admin/analytics" element={<Analytics />} />
+              <Route path="/admin/settings" element={<ParentSettings />} />
+
+              {/* Shared Routes */}
               <Route path="/profile" element={<ProfilePage />} />
             </Route>
           </Route>

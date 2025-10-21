@@ -50,11 +50,11 @@ const AnalyticsDashboard = ({ studentName, data }: AnalyticsDashboardProps) => {
       {/* Stats Overview */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl p-6 shadow-md">
+          <div key={stat.label} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                <p className="mt-2 text-3xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{stat.label}</p>
+                <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
               </div>
               <div className={`rounded-lg ${stat.color} p-3`}>
                 <stat.icon className="h-6 w-6 text-white" />
@@ -77,8 +77,8 @@ const AnalyticsDashboard = ({ studentName, data }: AnalyticsDashboardProps) => {
       {/* Charts Row */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Performance Over Time */}
-        <div className="bg-white rounded-xl p-6 shadow-md">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Performance Trend</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Performance Trend</h3>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={performanceOverTime}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -98,8 +98,8 @@ const AnalyticsDashboard = ({ studentName, data }: AnalyticsDashboardProps) => {
         </div>
 
         {/* Subject Performance */}
-        <div className="bg-white rounded-xl p-6 shadow-md">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Subject Performance</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Subject Performance</h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={subjectPerformance}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -117,8 +117,8 @@ const AnalyticsDashboard = ({ studentName, data }: AnalyticsDashboardProps) => {
       {/* Weekly Activity & Subject Breakdown */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Weekly Activity */}
-        <div className="bg-white rounded-xl p-6 shadow-md">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Weekly Study Time</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Weekly Study Time</h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={weeklyActivity}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -132,8 +132,8 @@ const AnalyticsDashboard = ({ studentName, data }: AnalyticsDashboardProps) => {
         </div>
 
         {/* Subject Distribution */}
-        <div className="bg-white rounded-xl p-6 shadow-md">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Time by Subject</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Time by Subject</h3>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie

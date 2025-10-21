@@ -76,7 +76,7 @@ const AIChat = () => {
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-t-xl shadow-lg">
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-700 dark:to-blue-700 text-white p-6 rounded-t-xl shadow-lg">
         <div className="flex items-center gap-3">
           <Bot className="h-8 w-8" />
           <div>
@@ -87,7 +87,7 @@ const AIChat = () => {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 bg-white p-6 overflow-y-auto space-y-4">
+      <div className="flex-1 bg-white dark:bg-gray-900 p-6 overflow-y-auto space-y-4">
         {messages.map((message, index) => (
           <div
             key={index}
@@ -117,12 +117,12 @@ const AIChat = () => {
                 className={`inline-block p-4 rounded-lg ${
                   message.role === 'user'
                     ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
                 }`}
               >
                 <p className="whitespace-pre-wrap">{message.content}</p>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {message.timestamp.toLocaleTimeString()}
               </p>
             </div>
@@ -133,11 +133,11 @@ const AIChat = () => {
             <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">
               <Bot className="h-5 w-5 text-white" />
             </div>
-            <div className="bg-gray-100 p-4 rounded-lg">
+            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
               <div className="flex gap-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce delay-100"></div>
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce delay-200"></div>
               </div>
             </div>
           </div>
@@ -147,14 +147,14 @@ const AIChat = () => {
 
       {/* Example Questions */}
       {messages.length === 1 && (
-        <div className="bg-gray-50 p-4 border-t border-gray-200">
-          <p className="text-sm font-medium text-gray-700 mb-3">Try asking:</p>
+        <div className="bg-gray-50 dark:bg-gray-800 p-4 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Try asking:</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {exampleQuestions.map((question, index) => (
               <button
                 key={index}
                 onClick={() => setInput(question)}
-                className="text-left text-sm p-3 bg-white rounded-lg hover:bg-gray-100 border border-gray-200 transition-colors"
+                className="text-left text-sm p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 transition-colors"
               >
                 {question}
               </button>
@@ -166,7 +166,7 @@ const AIChat = () => {
       {/* Input Area */}
       <form
         onSubmit={handleSend}
-        className="bg-white border-t border-gray-200 p-4 rounded-b-xl"
+        className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 rounded-b-xl"
       >
         <div className="flex gap-3">
           <input
@@ -174,7 +174,7 @@ const AIChat = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask me anything about your homework..."
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+            className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
             disabled={loading}
           />
           <button
@@ -186,7 +186,7 @@ const AIChat = () => {
             Send
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
           Press Enter to send • AI-powered by Claude
         </p>
       </form>

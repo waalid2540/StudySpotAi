@@ -110,40 +110,40 @@ const QuizPage = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Generate Your Quiz</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Generate Your Quiz</h2>
           <form onSubmit={handleGenerateQuiz} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subject</label>
               <input
                 type="text"
                 required
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
                 placeholder="e.g., Mathematics, Science, History"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Topic</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Topic</label>
               <input
                 type="text"
                 required
                 value={formData.topic}
                 onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
                 placeholder="e.g., Algebra, World War II, Photosynthesis"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Difficulty</label>
                 <select
                   value={formData.difficulty}
                   onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as any })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
                 >
                   <option value="easy">Easy</option>
                   <option value="medium">Medium</option>
@@ -152,11 +152,11 @@ const QuizPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Number of Questions</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Number of Questions</label>
                 <select
                   value={formData.numQuestions}
                   onChange={(e) => setFormData({ ...formData, numQuestions: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
                 >
                   <option value="5">5 Questions</option>
                   <option value="10">10 Questions</option>
@@ -183,19 +183,19 @@ const QuizPage = () => {
     const percentage = (score / quiz.questions.length) * 100;
     return (
       <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
           <Trophy className="h-20 w-20 text-yellow-500 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Quiz Complete!</h1>
-          <p className="text-gray-600 mb-8">Here are your results</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Quiz Complete!</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-8">Here are your results</p>
 
           <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-8 mb-8">
             <div className="text-6xl font-bold text-primary-600 mb-2">
               {score}/{quiz.questions.length}
             </div>
-            <div className="text-2xl font-semibold text-gray-700 mb-4">
+            <div className="text-2xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
               {percentage.toFixed(0)}% Correct
             </div>
-            <div className="text-lg text-gray-600">
+            <div className="text-lg text-gray-600 dark:text-gray-400">
               You earned {Math.round(percentage / 10)} points!
             </div>
           </div>
@@ -218,15 +218,15 @@ const QuizPage = () => {
                       <XCircle className="h-6 w-6 text-red-600 flex-shrink-0 mt-1" />
                     )}
                     <div className="flex-1 text-left">
-                      <p className="font-medium text-gray-900 mb-2">
+                      <p className="font-medium text-gray-900 dark:text-white mb-2">
                         {index + 1}. {question.question}
                       </p>
-                      <p className="text-sm text-gray-700">
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
                         <span className="font-medium">Your answer:</span>{' '}
                         {userAnswer !== null ? question.options[userAnswer] : 'Not answered'}
                       </p>
                       {!isCorrect && (
-                        <p className="text-sm text-gray-700 mt-1">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
                           <span className="font-medium">Correct answer:</span>{' '}
                           {question.options[question.correctAnswer]}
                         </p>
@@ -261,7 +261,7 @@ const QuizPage = () => {
     <div className="max-w-3xl mx-auto">
       {/* Progress Bar */}
       <div className="mb-8">
-        <div className="flex justify-between text-sm text-gray-600 mb-2">
+        <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
           <span>Question {currentQuestion + 1} of {quiz.questions.length}</span>
           <span>{progress.toFixed(0)}% Complete</span>
         </div>
@@ -274,8 +274,8 @@ const QuizPage = () => {
       </div>
 
       {/* Question Card */}
-      <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">{question.question}</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{question.question}</h2>
 
         <div className="space-y-3">
           {question.options.map((option, index) => (
@@ -297,10 +297,10 @@ const QuizPage = () => {
                   }`}
                 >
                   {selectedAnswer === index && (
-                    <div className="w-3 h-3 bg-white rounded-full"></div>
+                    <div className="w-3 h-3 bg-white dark:bg-gray-800 rounded-full"></div>
                   )}
                 </div>
-                <span className="font-medium text-gray-900">{option}</span>
+                <span className="font-medium text-gray-900 dark:text-white">{option}</span>
               </div>
             </button>
           ))}
@@ -312,7 +312,7 @@ const QuizPage = () => {
         <button
           onClick={handlePrevious}
           disabled={currentQuestion === 0}
-          className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-3 bg-gray-200 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Previous
         </button>
