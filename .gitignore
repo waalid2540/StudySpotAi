@@ -9,6 +9,7 @@ lerna-debug.log*
 
 # Dependencies
 node_modules
+**/node_modules
 dist
 dist-ssr
 *.local
@@ -28,10 +29,12 @@ dist-ssr
 .env
 .env.local
 .env.production
+backend/.env
 
 # Build
 build/
 .cache/
+backend/dist
 
 # Testing
 coverage/
@@ -42,3 +45,8 @@ sw.js
 sw.js.map
 workbox-*.js
 workbox-*.js.map
+
+# Backend specific
+backend/.env
+backend/.env.local
+backend/.env.production
