@@ -18,9 +18,12 @@ import {
   Trophy,
   Target,
   TrendingUp,
-  CheckCircle
+  CheckCircle,
+  Bot
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { TutorCharacterBuilder } from '../components/TutorCharacterBuilder';
+import { TutorCharacter } from '../types/tutorCharacter';
 
 interface UserProfile {
   name: string;
@@ -47,8 +50,9 @@ const ProfilePage = () => {
   const { user } = useAuth();
   const { stats: userStats, loading: statsLoading } = useUserStats();
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'ai-tutor' | 'security'>('profile');
   const [loading, setLoading] = useState(true);
+  const [tutorCharacter, setTutorCharacter] = useState<TutorCharacter | null>(null);
 
   const [profile, setProfile] = useState<UserProfile>({
     name: 'User',
@@ -134,6 +138,15 @@ const ProfilePage = () => {
       setLoading(false);
     }
   }, [userStats]);
+
+  // Load tutor character from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('tutorCharacter');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setTutorCharacter({ ...parsed, createdAt: new Date(parsed.createdAt) });
+    }
+  }, []);
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -247,33 +260,46 @@ const ProfilePage = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700 dark:border-gray-700">
+      <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700 dark:border-gray-700 overflow-x-auto">
         <button
           onClick={() => setActiveTab('profile')}
-          className={`pb-4 px-4 font-medium transition-colors ${
+          className={`pb-4 px-4 font-medium transition-colors whitespace-nowrap ${
             activeTab === 'profile'
               ? 'text-primary-600 border-b-2 border-primary-600'
-              : 'text-gray-500 hover:text-gray-700'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
           }`}
         >
           Profile Information
         </button>
         <button
           onClick={() => setActiveTab('preferences')}
-          className={`pb-4 px-4 font-medium transition-colors ${
+          className={`pb-4 px-4 font-medium transition-colors whitespace-nowrap ${
             activeTab === 'preferences'
               ? 'text-primary-600 border-b-2 border-primary-600'
-              : 'text-gray-500 hover:text-gray-700'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
           }`}
         >
           Preferences
         </button>
+        {user?.role === 'student' && (
+          <button
+            onClick={() => setActiveTab('ai-tutor')}
+            className={`pb-4 px-4 font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'ai-tutor'
+                ? 'text-primary-600 border-b-2 border-primary-600'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            <Bot className="h-4 w-4" />
+            AI Tutor
+          </button>
+        )}
         <button
           onClick={() => setActiveTab('security')}
-          className={`pb-4 px-4 font-medium transition-colors ${
+          className={`pb-4 px-4 font-medium transition-colors whitespace-nowrap ${
             activeTab === 'security'
               ? 'text-primary-600 border-b-2 border-primary-600'
-              : 'text-gray-500 hover:text-gray-700'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
           }`}
         >
           Security
@@ -463,6 +489,30 @@ const ProfilePage = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* AI Tutor Tab */}
+      {activeTab === 'ai-tutor' && user?.role === 'student' && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Bot className="h-6 w-6" />
+              Customize Your AI Tutor
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Create a personalized AI tutor that matches your learning style
+            </p>
+          </div>
+
+          <TutorCharacterBuilder
+            initialCharacter={tutorCharacter || undefined}
+            onSave={(character) => {
+              setTutorCharacter(character);
+              localStorage.setItem('tutorCharacter', JSON.stringify(character));
+              toast.success(`${character.name} is now your AI tutor!`);
+            }}
+          />
         </div>
       )}
 

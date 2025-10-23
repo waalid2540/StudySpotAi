@@ -44,8 +44,28 @@ const isDemoMode = () => {
   return token && token.startsWith('eyJ');
 };
 
-// Demo homework storage (in-memory)
-let demoHomework: any[] = [];
+// Demo homework storage (persisted to localStorage)
+const HOMEWORK_STORAGE_KEY = 'demo_homework';
+
+const loadDemoHomework = (): any[] => {
+  try {
+    const stored = localStorage.getItem(HOMEWORK_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Error loading homework from localStorage:', error);
+    return [];
+  }
+};
+
+const saveDemoHomework = (homework: any[]) => {
+  try {
+    localStorage.setItem(HOMEWORK_STORAGE_KEY, JSON.stringify(homework));
+  } catch (error) {
+    console.error('Error saving homework to localStorage:', error);
+  }
+};
+
+let demoHomework: any[] = loadDemoHomework();
 
 // Homework API
 export const homeworkAPI = {
@@ -65,6 +85,8 @@ export const homeworkAPI = {
         createdAt: new Date().toISOString(),
       };
       demoHomework.push(newHomework);
+      saveDemoHomework(demoHomework);
+      console.log('✅ Homework saved to localStorage:', newHomework);
       return Promise.resolve({ data: { homework: newHomework } });
     }
     return api.post('/homework', data);
@@ -73,6 +95,8 @@ export const homeworkAPI = {
   getAll: () => {
     if (isDemoMode()) {
       console.warn('🎭 DEMO MODE: Loading homework from local storage');
+      demoHomework = loadDemoHomework(); // Reload from localStorage
+      console.log(`📚 Loaded ${demoHomework.length} homework items`);
       return Promise.resolve({ data: { homework: demoHomework } });
     }
     return api.get('/homework');
@@ -91,6 +115,8 @@ export const homeworkAPI = {
       const index = demoHomework.findIndex(h => h.id === id);
       if (index !== -1) {
         demoHomework[index] = { ...demoHomework[index], ...data };
+        saveDemoHomework(demoHomework);
+        console.log('✅ Homework updated in localStorage');
       }
       return Promise.resolve({ data: { homework: demoHomework[index] } });
     }
@@ -102,11 +128,13 @@ export const homeworkAPI = {
       const index = demoHomework.findIndex(h => h.id === id);
       if (index !== -1) {
         demoHomework[index].status = 'completed';
+        saveDemoHomework(demoHomework);
 
         // Award points and track completion
         homeworkCompletedCount++;
         const updatedPoints = awardPoints(20, 'Homework completed');
 
+        console.log('✅ Homework marked as completed and saved');
         return Promise.resolve({
           data: {
             homework: demoHomework[index],
@@ -125,6 +153,8 @@ export const homeworkAPI = {
   delete: (id: string) => {
     if (isDemoMode()) {
       demoHomework = demoHomework.filter(h => h.id !== id);
+      saveDemoHomework(demoHomework);
+      console.log('✅ Homework deleted from localStorage');
       return Promise.resolve({ data: { success: true } });
     }
     return api.delete(`/homework/${id}`);
@@ -330,6 +360,145 @@ export const aiAPI = {
   getChatHistory: (sessionId: string) => api.get(`/ai/chat/${sessionId}`),
 };
 
+// Demo messaging storage
+const MESSAGES_STORAGE_KEY = 'demo_messages';
+
+const loadDemoMessages = (): any[] => {
+  try {
+    const stored = localStorage.getItem(MESSAGES_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Error loading messages from localStorage:', error);
+    return [];
+  }
+};
+
+const saveDemoMessages = (messages: any[]) => {
+  try {
+    localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(messages));
+  } catch (error) {
+    console.error('Error saving messages to localStorage:', error);
+  }
+};
+
+let demoMessages: any[] = loadDemoMessages();
+
+// Messaging API
+export const messagingAPI = {
+  getConversations: () => {
+    if (isDemoMode()) {
+      console.warn('🎭 DEMO MODE: Loading conversations from localStorage');
+      const messages = loadDemoMessages();
+
+      // Group messages by conversation
+      const conversations: any[] = [];
+      const conversationMap = new Map();
+
+      messages.forEach((msg: any) => {
+        const otherUserId = msg.senderId === 'current-user' ? msg.receiverId : msg.senderId;
+
+        if (!conversationMap.has(otherUserId)) {
+          conversationMap.set(otherUserId, {
+            userId: otherUserId,
+            userName: msg.senderId === 'current-user' ? msg.receiverName : msg.senderName,
+            userRole: msg.senderId === 'current-user' ? msg.receiverRole : msg.senderRole,
+            lastMessage: msg.content,
+            lastMessageTime: msg.timestamp,
+            unreadCount: msg.senderId !== 'current-user' && !msg.read ? 1 : 0,
+          });
+        } else {
+          const conv = conversationMap.get(otherUserId);
+          if (new Date(msg.timestamp) > new Date(conv.lastMessageTime)) {
+            conv.lastMessage = msg.content;
+            conv.lastMessageTime = msg.timestamp;
+          }
+          if (msg.senderId !== 'current-user' && !msg.read) {
+            conv.unreadCount++;
+          }
+        }
+      });
+
+      conversationMap.forEach(conv => conversations.push(conv));
+      conversations.sort((a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime());
+
+      return Promise.resolve({ data: { conversations } });
+    }
+    return api.get('/messages/conversations');
+  },
+
+  getMessages: (userId: string) => {
+    if (isDemoMode()) {
+      console.warn('🎭 DEMO MODE: Loading messages from localStorage');
+      const allMessages = loadDemoMessages();
+      const messages = allMessages.filter(
+        (msg: any) =>
+          (msg.senderId === 'current-user' && msg.receiverId === userId) ||
+          (msg.senderId === userId && msg.receiverId === 'current-user')
+      );
+
+      // Mark messages as read
+      allMessages.forEach((msg: any) => {
+        if (msg.senderId === userId && msg.receiverId === 'current-user') {
+          msg.read = true;
+        }
+      });
+      saveDemoMessages(allMessages);
+
+      return Promise.resolve({ data: { messages } });
+    }
+    return api.get(`/messages/${userId}`);
+  },
+
+  sendMessage: (receiverId: string, content: string, receiverName: string, receiverRole: string) => {
+    if (isDemoMode()) {
+      console.warn('🎭 DEMO MODE: Sending message locally');
+      const newMessage = {
+        id: `msg-${Date.now()}`,
+        senderId: 'current-user',
+        senderName: 'You',
+        senderRole: 'student',
+        receiverId,
+        receiverName,
+        receiverRole,
+        content,
+        timestamp: new Date().toISOString(),
+        read: false,
+      };
+
+      demoMessages.push(newMessage);
+      saveDemoMessages(demoMessages);
+      console.log('✅ Message sent and saved');
+
+      return Promise.resolve({ data: { message: newMessage } });
+    }
+    return api.post('/messages', { receiverId, content });
+  },
+
+  markAsRead: (messageId: string) => {
+    if (isDemoMode()) {
+      const allMessages = loadDemoMessages();
+      const message = allMessages.find((m: any) => m.id === messageId);
+      if (message) {
+        message.read = true;
+        saveDemoMessages(allMessages);
+      }
+      return Promise.resolve({ data: { success: true } });
+    }
+    return api.put(`/messages/${messageId}/read`);
+  },
+
+  getUnreadCount: () => {
+    if (isDemoMode()) {
+      const messages = loadDemoMessages();
+      const unreadCount = messages.filter(
+        (msg: any) => msg.receiverId === 'current-user' && !msg.read
+      ).length;
+      return Promise.resolve({ data: { unreadCount } });
+    }
+    return api.get('/messages/unread-count');
+  },
+};
+
 // Parent API
 export const parentAPI = {
   getDashboard: () => api.get('/parents/dashboard'),
@@ -342,6 +511,27 @@ export const parentAPI = {
   linkChild: (childId: string) => api.post('/parents/link-child', { childId }),
 
   getNotifications: () => api.get('/parents/notifications'),
+
+  // Get linked children for messaging
+  getChildren: () => {
+    if (isDemoMode()) {
+      console.warn('🎭 DEMO MODE: Using demo children data');
+      return Promise.resolve({
+        data: {
+          children: [
+            {
+              id: 'child-1',
+              name: 'Alex Smith',
+              email: 'alex@example.com',
+              grade: '8th Grade',
+              avatar: null,
+            }
+          ]
+        }
+      });
+    }
+    return api.get('/parents/children');
+  },
 };
 
 // Demo gamification tracking
@@ -406,35 +596,35 @@ const checkAndUnlockBadges = () => {
 // Demo gamification data
 const demoGamificationData = {
   points: {
-    totalPoints: 385,
-    level: 4,
-    rank: 3,
-    pointsToNextLevel: 15,
+    totalPoints: 0,
+    level: 1,
+    rank: 1,
+    pointsToNextLevel: 100,
   },
 
   allBadges: [
-    { id: '1', name: 'First Steps', description: 'Complete your first homework', icon: 'star', requirement: 'Complete 1 homework', points: 10, earned: true, earnedAt: '2025-10-15' },
-    { id: '2', name: 'Quick Learner', description: 'Complete 5 homework assignments', icon: 'zap', requirement: 'Complete 5 homework', points: 25, earned: true, earnedAt: '2025-10-17' },
+    { id: '1', name: 'First Steps', description: 'Complete your first homework', icon: 'star', requirement: 'Complete 1 homework', points: 10, earned: false },
+    { id: '2', name: 'Quick Learner', description: 'Complete 5 homework assignments', icon: 'zap', requirement: 'Complete 5 homework', points: 25, earned: false },
     { id: '3', name: 'Homework Hero', description: 'Complete 10 homework assignments', icon: 'trophy', requirement: 'Complete 10 homework', points: 50, earned: false },
-    { id: '4', name: 'Quiz Master', description: 'Score 100% on any quiz', icon: 'award', requirement: 'Get perfect score', points: 30, earned: true, earnedAt: '2025-10-18' },
+    { id: '4', name: 'Quiz Master', description: 'Score 100% on any quiz', icon: 'award', requirement: 'Get perfect score', points: 30, earned: false },
     { id: '5', name: 'Streak Champion', description: 'Maintain a 7-day learning streak', icon: 'medal', requirement: '7 consecutive days', points: 40, earned: false },
-    { id: '6', name: 'AI Enthusiast', description: 'Use AI helper 10 times', icon: 'crown', requirement: 'Use AI helper 10x', points: 20, earned: true, earnedAt: '2025-10-19' },
+    { id: '6', name: 'AI Enthusiast', description: 'Use AI helper 10 times', icon: 'crown', requirement: 'Use AI helper 10x', points: 20, earned: false },
     { id: '7', name: 'Points Collector', description: 'Earn 500 total points', icon: 'star', requirement: 'Reach 500 points', points: 100, earned: false },
     { id: '8', name: 'Early Bird', description: 'Complete homework before due date 5 times', icon: 'zap', requirement: 'Early completion 5x', points: 35, earned: false },
     { id: '9', name: 'Perfect Week', description: 'Complete all homework in a week', icon: 'medal', requirement: '100% weekly completion', points: 60, earned: false },
   ],
 
   leaderboard: [
-    { rank: 1, userId: 'user-001', userName: 'Emma Johnson', points: 1250, level: 13, badges: 12 },
-    { rank: 2, userId: 'user-002', userName: 'Liam Chen', points: 890, level: 9, badges: 9 },
-    { rank: 3, userId: 'demo-user', userName: 'You', points: 385, level: 4, badges: 4 },
-    { rank: 4, userId: 'user-004', userName: 'Sophia Martinez', points: 340, level: 4, badges: 5 },
-    { rank: 5, userId: 'user-005', userName: 'Noah Williams', points: 295, level: 3, badges: 4 },
-    { rank: 6, userId: 'user-006', userName: 'Olivia Brown', points: 270, level: 3, badges: 3 },
-    { rank: 7, userId: 'user-007', userName: 'Ethan Davis', points: 245, level: 3, badges: 4 },
-    { rank: 8, userId: 'user-008', userName: 'Ava Garcia', points: 210, level: 2, badges: 3 },
-    { rank: 9, userId: 'user-009', userName: 'Mason Rodriguez', points: 180, level: 2, badges: 2 },
-    { rank: 10, userId: 'user-010', userName: 'Isabella Lopez', points: 155, level: 2, badges: 2 },
+    { rank: 1, userId: 'user-001', userName: 'Emma Johnson', points: 450, level: 5, badges: 6 },
+    { rank: 2, userId: 'user-002', userName: 'Liam Chen', points: 380, level: 4, badges: 5 },
+    { rank: 3, userId: 'user-004', userName: 'Sophia Martinez', points: 320, level: 4, badges: 4 },
+    { rank: 4, userId: 'user-005', userName: 'Noah Williams', points: 280, level: 3, badges: 4 },
+    { rank: 5, userId: 'user-006', userName: 'Olivia Brown', points: 250, level: 3, badges: 3 },
+    { rank: 6, userId: 'user-007', userName: 'Ethan Davis', points: 210, level: 3, badges: 3 },
+    { rank: 7, userId: 'user-008', userName: 'Ava Garcia', points: 180, level: 2, badges: 3 },
+    { rank: 8, userId: 'user-009', userName: 'Mason Rodriguez', points: 150, level: 2, badges: 2 },
+    { rank: 9, userId: 'user-010', userName: 'Isabella Lopez', points: 120, level: 2, badges: 2 },
+    { rank: 10, userId: 'demo-user', userName: 'You', points: 0, level: 1, badges: 0 },
   ],
 
   rewards: [

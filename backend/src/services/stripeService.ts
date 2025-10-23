@@ -1,8 +1,11 @@
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
-});
+// Initialize Stripe only if API key is provided
+const stripe: Stripe | null = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-09-30.clover',
+    })
+  : null;
 
 export interface SubscriptionPlan {
   id: string;
@@ -88,12 +91,16 @@ class StripeService {
     successUrl: string,
     cancelUrl: string
   ): Promise<Stripe.Checkout.Session> {
+    if (!stripe) {
+      throw new Error('Stripe is not configured. Please add STRIPE_SECRET_KEY to environment variables.');
+    }
+
     const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId);
     if (!plan) {
       throw new Error('Invalid subscription plan');
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await stripe!.checkout.sessions.create({
       customer_email: userEmail,
       client_reference_id: userId,
       payment_method_types: ['card'],
@@ -124,7 +131,11 @@ class StripeService {
     customerId: string,
     returnUrl: string
   ): Promise<Stripe.BillingPortal.Session> {
-    const session = await stripe.billingPortal.sessions.create({
+    if (!stripe) {
+      throw new Error('Stripe is not configured. Please add STRIPE_SECRET_KEY to environment variables.');
+    }
+
+    const session = await stripe!.billingPortal.sessions.create({
       customer: customerId,
       return_url: returnUrl,
     });
@@ -136,14 +147,20 @@ class StripeService {
    * Get subscription details
    */
   async getSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
-    return await stripe.subscriptions.retrieve(subscriptionId);
+    if (!stripe) {
+      throw new Error('Stripe is not configured. Please add STRIPE_SECRET_KEY to environment variables.');
+    }
+    return await stripe!.subscriptions.retrieve(subscriptionId);
   }
 
   /**
    * Cancel subscription
    */
   async cancelSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
-    return await stripe.subscriptions.cancel(subscriptionId);
+    if (!stripe) {
+      throw new Error('Stripe is not configured. Please add STRIPE_SECRET_KEY to environment variables.');
+    }
+    return await stripe!.subscriptions.cancel(subscriptionId);
   }
 
   /**
@@ -153,9 +170,13 @@ class StripeService {
     subscriptionId: string,
     newPriceId: string
   ): Promise<Stripe.Subscription> {
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    if (!stripe) {
+      throw new Error('Stripe is not configured. Please add STRIPE_SECRET_KEY to environment variables.');
+    }
 
-    return await stripe.subscriptions.update(subscriptionId, {
+    const subscription = await stripe!.subscriptions.retrieve(subscriptionId);
+
+    return await stripe!.subscriptions.update(subscriptionId, {
       items: [
         {
           id: subscription.items.data[0].id,
@@ -173,9 +194,13 @@ class StripeService {
     payload: string | Buffer,
     signature: string
   ): Promise<Stripe.Event> {
+    if (!stripe) {
+      throw new Error('Stripe is not configured. Please add STRIPE_SECRET_KEY to environment variables.');
+    }
+
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
 
-    return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+    return stripe!.webhooks.constructEvent(payload, signature, webhookSecret);
   }
 
   /**

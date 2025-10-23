@@ -16,8 +16,10 @@ export class AuthController {
         return res.status(400).json({ error: 'All fields are required' });
       }
 
-      if (!['student', 'parent', 'admin'].includes(role)) {
-        return res.status(400).json({ error: 'Invalid role' });
+      // Only allow student and parent roles via registration
+      // Admins must be appointed via CLI/terminal
+      if (!['student', 'parent'].includes(role)) {
+        return res.status(400).json({ error: 'Invalid role. Only student and parent roles can be registered.' });
       }
 
       // Create Firebase user

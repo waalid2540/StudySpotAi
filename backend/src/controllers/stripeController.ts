@@ -29,7 +29,7 @@ export class StripeController {
   async createCheckoutSession(req: Request, res: Response) {
     try {
       const { planId } = req.body;
-      const userId = req.user?.id;
+      const userId = req.user?.uid;
       const userEmail = req.user?.email;
 
       if (!userId || !userEmail) {
@@ -86,7 +86,7 @@ export class StripeController {
    */
   async createPortalSession(req: Request, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.uid;
 
       if (!userId) {
         return res.status(401).json({
@@ -134,7 +134,7 @@ export class StripeController {
    */
   async getCurrentSubscription(req: Request, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.uid;
 
       if (!userId) {
         return res.status(401).json({
@@ -166,7 +166,7 @@ export class StripeController {
    */
   async cancelSubscription(req: Request, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.uid;
 
       if (!userId) {
         return res.status(401).json({

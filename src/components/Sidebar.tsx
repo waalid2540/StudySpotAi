@@ -34,6 +34,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { to: '/ai-chat', icon: MessageSquare, label: 'AI Tutor' },
     { to: '/quiz', icon: Trophy, label: 'Quizzes' },
     { to: '/gamification', icon: Award, label: 'Rewards' },
+    { to: '/messages', icon: Bell, label: 'Messages' },
+    { to: '/settings', icon: Settings, label: 'Settings' },
     { to: '/profile', icon: User, label: 'Profile' },
   ];
 
