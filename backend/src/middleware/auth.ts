@@ -1,32 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
-import admin from 'firebase-admin';
+import jwt from 'jsonwebtoken';
 import { AppError } from './errorHandler';
 import { UserRole } from '../entities/User';
 
-// Initialize Firebase Admin (do this once in your app)
-// Only initialize if Firebase credentials are provided
-const hasFirebaseCredentials = process.env.FIREBASE_PROJECT_ID &&
-  process.env.FIREBASE_PRIVATE_KEY &&
-  process.env.FIREBASE_CLIENT_EMAIL &&
-  process.env.FIREBASE_PRIVATE_KEY.trim() !== '' &&
-  process.env.FIREBASE_CLIENT_EMAIL.trim() !== '';
-
-if (!admin.apps.length && hasFirebaseCredentials) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    }),
-  });
-}
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
 
 // Extend Express Request type to include user
 declare global {
   namespace Express {
     interface Request {
       user?: {
-        uid: string;
+        userId: string;
         email: string;
         role?: UserRole;
       };
@@ -40,17 +24,6 @@ export const authenticate = async (
   next: NextFunction
 ) => {
   try {
-    // In development without Firebase, use mock authentication
-    if (process.env.NODE_ENV === 'development' && !hasFirebaseCredentials) {
-      console.log('[DEV MODE] Using mock authentication - Firebase not configured');
-      req.user = {
-        uid: 'dev-user-123',
-        email: 'dev@example.com',
-        role: 'student' as UserRole,
-      };
-      return next();
-    }
-
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -59,18 +32,24 @@ export const authenticate = async (
 
     const token = authHeader.split(' ')[1];
 
-    // Verify Firebase token
-    const decodedToken = await admin.auth().verifyIdToken(token);
+    // Verify JWT token
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
 
     req.user = {
-      uid: decodedToken.uid,
-      email: decodedToken.email || '',
-      role: decodedToken.role as UserRole,
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role as UserRole,
     };
 
     next();
-  } catch (error) {
-    next(new AppError('Invalid or expired token', 401));
+  } catch (error: any) {
+    if (error.name === 'TokenExpiredError') {
+      next(new AppError('Token expired', 401));
+    } else if (error.name === 'JsonWebTokenError') {
+      next(new AppError('Invalid token', 401));
+    } else {
+      next(new AppError('Authentication failed', 401));
+    }
   }
 };
 

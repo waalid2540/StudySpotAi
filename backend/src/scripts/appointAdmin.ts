@@ -6,74 +6,76 @@
  * Example: npm run appoint-admin admin@example.com
  */
 
-import admin from 'firebase-admin';
+import 'reflect-metadata';
+import { DataSource } from 'typeorm';
+import { User, UserRole } from '../entities/User';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-// Initialize Firebase Admin
-if (!admin.apps.length) {
-  try {
-    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_PATH
-      ? require(path.resolve(process.cwd(), process.env.FIREBASE_SERVICE_ACCOUNT_PATH))
-      : undefined;
-
-    admin.initializeApp({
-      credential: serviceAccount
-        ? admin.credential.cert(serviceAccount)
-        : admin.credential.applicationDefault(),
-    });
-  } catch (error) {
-    console.error('Error initializing Firebase Admin:', error);
-    process.exit(1);
-  }
-}
+// Initialize database connection
+const AppDataSource = new DataSource({
+  type: 'postgres',
+  url: process.env.DATABASE_URL,
+  entities: [path.resolve(__dirname, '../entities/**/*.{ts,js}')],
+  synchronize: false,
+  logging: false,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+});
 
 async function appointAdmin(email: string): Promise<void> {
   try {
+    console.log(`\n🔄 Connecting to database...`);
+    await AppDataSource.initialize();
+    console.log(`✅ Database connected`);
+
     console.log(`\n🔍 Looking up user with email: ${email}...`);
 
+    const userRepository = AppDataSource.getRepository(User);
+
     // Get user by email
-    const user = await admin.auth().getUserByEmail(email);
+    const user = await userRepository.findOne({ where: { email } });
 
-    console.log(`✅ Found user: ${user.displayName || user.email} (UID: ${user.uid})`);
+    if (!user) {
+      console.error(`\n❌ Error: No user found with email: ${email}`);
+      console.log(`\n💡 Tip: Make sure the user has registered first before appointing them as admin.\n`);
+      await AppDataSource.destroy();
+      process.exit(1);
+    }
 
-    // Check current role
-    const currentClaims = user.customClaims || {};
-    const currentRole = currentClaims.role || 'student';
+    console.log(`✅ Found user: ${user.first_name} ${user.last_name} (ID: ${user.id})`);
+    console.log(`📋 Current role: ${user.role}`);
 
-    console.log(`📋 Current role: ${currentRole}`);
-
-    if (currentRole === 'admin') {
+    if (user.role === UserRole.ADMIN) {
       console.log('⚠️  User is already an admin!');
+      await AppDataSource.destroy();
       process.exit(0);
     }
 
+    const previousRole = user.role;
+
     // Set admin role
-    await admin.auth().setCustomUserClaims(user.uid, {
-      ...currentClaims,
-      role: 'admin',
-    });
+    user.role = UserRole.ADMIN;
+    await userRepository.save(user);
 
     console.log(`✅ Successfully appointed ${email} as admin!`);
     console.log(`\n👤 User Details:`);
-    console.log(`   - Name: ${user.displayName || 'N/A'}`);
+    console.log(`   - Name: ${user.first_name} ${user.last_name}`);
     console.log(`   - Email: ${user.email}`);
-    console.log(`   - UID: ${user.uid}`);
-    console.log(`   - Previous Role: ${currentRole}`);
-    console.log(`   - New Role: admin`);
+    console.log(`   - ID: ${user.id}`);
+    console.log(`   - Previous Role: ${previousRole}`);
+    console.log(`   - New Role: ${user.role}`);
     console.log(`\n✨ The user will need to log out and log back in for changes to take effect.\n`);
 
+    await AppDataSource.destroy();
     process.exit(0);
   } catch (error: any) {
-    if (error.code === 'auth/user-not-found') {
-      console.error(`\n❌ Error: No user found with email: ${email}`);
-      console.log(`\n💡 Tip: Make sure the user has registered first before appointing them as admin.\n`);
-    } else {
-      console.error('\n❌ Error appointing admin:', error.message);
-      console.error('\nFull error:', error);
+    console.error('\n❌ Error appointing admin:', error.message);
+    console.error('\nFull error:', error);
+    if (AppDataSource.isInitialized) {
+      await AppDataSource.destroy();
     }
     process.exit(1);
   }
