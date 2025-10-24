@@ -73,16 +73,16 @@ export class AuthController {
           email: user.email,
           role: user.role,
         },
-        JWT_SECRET as jwt.Secret,
-        { expiresIn: JWT_EXPIRES_IN }
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions
       );
 
       const refreshToken = jwt.sign(
         {
           userId: user.id,
         },
-        JWT_REFRESH_SECRET as jwt.Secret,
-        { expiresIn: JWT_REFRESH_EXPIRES_IN }
+        JWT_REFRESH_SECRET,
+        { expiresIn: JWT_REFRESH_EXPIRES_IN } as jwt.SignOptions
       );
 
       res.status(201).json({
@@ -150,16 +150,16 @@ export class AuthController {
           email: user.email,
           role: user.role,
         },
-        JWT_SECRET as jwt.Secret,
-        { expiresIn: JWT_EXPIRES_IN }
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions
       );
 
       const refreshToken = jwt.sign(
         {
           userId: user.id,
         },
-        JWT_REFRESH_SECRET as jwt.Secret,
-        { expiresIn: JWT_REFRESH_EXPIRES_IN }
+        JWT_REFRESH_SECRET,
+        { expiresIn: JWT_REFRESH_EXPIRES_IN } as jwt.SignOptions
       );
 
       res.json({
@@ -293,8 +293,8 @@ export class AuthController {
           email: user.email,
           role: user.role,
         },
-        JWT_SECRET as jwt.Secret,
-        { expiresIn: JWT_EXPIRES_IN }
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions
       );
 
       res.json({
