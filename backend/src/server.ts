@@ -50,6 +50,20 @@ if (process.env.NODE_ENV === 'development') {
 // API Documentation
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Root endpoint
+app.get('/', (_req, res) => {
+  res.json({
+    message: 'StudySpot AI - Learning Platform API',
+    version: process.env.API_VERSION || 'v1',
+    status: 'operational',
+    endpoints: {
+      api: `/api/${process.env.API_VERSION || 'v1'}`,
+      health: '/health',
+      docs: '/api/docs',
+    },
+  });
+});
+
 // Health check endpoint
 app.get('/health', (_req, res) => {
   res.status(200).json({
