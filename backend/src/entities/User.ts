@@ -19,11 +19,11 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true, length: 128 })
-  firebase_uid: string;
-
   @Column({ unique: true })
   email: string;
+
+  @Column({ select: false }) // Don't include password in queries by default
+  password_hash: string;
 
   @Column({
     type: 'enum',
@@ -36,6 +36,18 @@ export class User {
 
   @Column({ length: 100 })
   last_name: string;
+
+  @Column({ default: false })
+  email_verified: boolean;
+
+  @Column({ nullable: true })
+  email_verification_token: string;
+
+  @Column({ nullable: true })
+  password_reset_token: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  password_reset_expires: Date;
 
   @Column({ nullable: true })
   profile_picture_url: string;

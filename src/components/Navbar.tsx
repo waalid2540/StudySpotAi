@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, Bell, User, LogOut, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import ThemeToggle from './ThemeToggle';
 import NotificationsCenter from './NotificationsCenter';
 import SearchBar from './SearchBar';
+import { messagingAPI } from '../services/api';
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -16,6 +17,29 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+
+  // Load unread messages count
+  useEffect(() => {
+    loadUnreadCount();
+
+    // Poll for updates every 10 seconds
+    const interval = setInterval(() => {
+      loadUnreadCount();
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadUnreadCount = async () => {
+    try {
+      const response = await messagingAPI.getUnreadCount();
+      setUnreadMessagesCount(response.data.unreadCount);
+    } catch (error) {
+      // Silently fail - don't show error toasts for background updates
+      console.error('Error loading unread count:', error);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -60,7 +84,11 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
             aria-label="Notifications"
           >
             <Bell className="h-6 w-6 text-gray-600 dark:text-gray-300" />
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-error-500" />
+            {unreadMessagesCount > 0 && (
+              <span className="absolute -right-1 -top-1 h-5 w-5 rounded-full bg-error-500 flex items-center justify-center text-xs text-white font-bold">
+                {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+              </span>
+            )}
           </button>
 
           {/* User Menu */}

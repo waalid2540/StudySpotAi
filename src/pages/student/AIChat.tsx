@@ -1,20 +1,53 @@
 import { useState, useRef, useEffect } from 'react';
 import { aiAPI } from '../../services/api';
-import { Send, Bot, User } from 'lucide-react';
+import { Send, Bot, User, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { TutorCharacter, PERSONALITY_TRAITS } from '../../types/tutorCharacter';
+import { TutorCharacterPreview } from '../../components/TutorCharacterPreview';
+import { TutorCharacterBuilder } from '../../components/TutorCharacterBuilder';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  emotion?: 'happy' | 'thinking' | 'excited' | 'proud';
 }
 
 const AIChat = () => {
+  // Load saved character or use default
+  const [tutorCharacter, setTutorCharacter] = useState<TutorCharacter>(() => {
+    const saved = localStorage.getItem('tutorCharacter');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return { ...parsed, createdAt: new Date(parsed.createdAt) };
+    }
+    // Default character
+    return {
+      id: 'default',
+      name: 'Buddy',
+      personality: 'friend',
+      appearance: {
+        bodyType: 'round',
+        skinColor: '#FBBF24',
+        eyeStyle: 'sparkle',
+        mouthStyle: 'smile',
+        accessory: 'none',
+        primaryColor: '#60A5FA',
+        secondaryColor: '#A78BFA',
+      },
+      createdAt: new Date(),
+    };
+  });
+
+  const [showCharacterSettings, setShowCharacterSettings] = useState(false);
+  const personality = PERSONALITY_TRAITS[tutorCharacter.personality];
+
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: 'Hi! I\'m your AI tutor. Ask me anything about your homework, and I\'ll help you understand it step by step!',
+      content: personality.greetings[Math.floor(Math.random() * personality.greetings.length)],
       timestamp: new Date(),
+      emotion: 'happy',
     },
   ]);
   const [input, setInput] = useState('');
@@ -46,10 +79,16 @@ const AIChat = () => {
 
     try {
       const response = await aiAPI.chat(input, sessionId);
+      let aiContent = response.data.message || 'I apologize, but I couldn\'t process that request.';
+
+      // Add personality flair to the response
+      const emotion = Math.random() > 0.7 ? 'excited' : 'happy';
+
       const aiMessage: Message = {
         role: 'assistant',
-        content: response.data.message || 'I apologize, but I couldn\'t process that request.',
+        content: aiContent,
         timestamp: new Date(),
+        emotion,
       };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error: any) {
@@ -59,6 +98,7 @@ const AIChat = () => {
         role: 'assistant',
         content: 'Sorry, I\'m having trouble connecting right now. Please try again.',
         timestamp: new Date(),
+        emotion: 'happy',
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -77,12 +117,31 @@ const AIChat = () => {
     <div className="flex flex-col h-[calc(100vh-12rem)]">
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-700 dark:to-blue-700 text-white p-6 rounded-t-xl shadow-lg">
-        <div className="flex items-center gap-3">
-          <Bot className="h-8 w-8" />
-          <div>
-            <h1 className="text-2xl font-bold">AI Tutor</h1>
-            <p className="text-sm opacity-90">Get instant help with your homework</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="bg-white/20 rounded-lg p-2">
+              <TutorCharacterPreview
+                appearance={tutorCharacter.appearance}
+                emotion="happy"
+                animate={false}
+                size="small"
+                aiImageUrl={tutorCharacter.useAIImage ? tutorCharacter.aiGeneratedImage : undefined}
+              />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">{tutorCharacter.name}</h1>
+              <p className="text-sm opacity-90">
+                {personality.icon} {personality.name} • Ready to help!
+              </p>
+            </div>
           </div>
+          <button
+            onClick={() => setShowCharacterSettings(!showCharacterSettings)}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            title="Customize your tutor"
+          >
+            <Settings className="h-5 w-5" />
+          </button>
         </div>
       </div>
 
@@ -95,19 +154,21 @@ const AIChat = () => {
               message.role === 'user' ? 'flex-row-reverse' : ''
             }`}
           >
-            <div
-              className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                message.role === 'user'
-                  ? 'bg-primary-600'
-                  : 'bg-purple-600'
-              }`}
-            >
-              {message.role === 'user' ? (
+            {message.role === 'user' ? (
+              <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-primary-600">
                 <User className="h-5 w-5 text-white" />
-              ) : (
-                <Bot className="h-5 w-5 text-white" />
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="flex-shrink-0">
+                <TutorCharacterPreview
+                  appearance={tutorCharacter.appearance}
+                  emotion={message.emotion || 'happy'}
+                  animate={index === messages.length - 1}
+                  size="small"
+                  aiImageUrl={tutorCharacter.useAIImage ? tutorCharacter.aiGeneratedImage : undefined}
+                />
+              </div>
+            )}
             <div
               className={`flex-1 max-w-2xl ${
                 message.role === 'user' ? 'text-right' : ''
@@ -130,8 +191,14 @@ const AIChat = () => {
         ))}
         {loading && (
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">
-              <Bot className="h-5 w-5 text-white" />
+            <div className="flex-shrink-0">
+              <TutorCharacterPreview
+                appearance={tutorCharacter.appearance}
+                emotion="thinking"
+                animate={true}
+                size="small"
+                aiImageUrl={tutorCharacter.useAIImage ? tutorCharacter.aiGeneratedImage : undefined}
+              />
             </div>
             <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
               <div className="flex gap-2">
@@ -190,6 +257,46 @@ const AIChat = () => {
           Press Enter to send • AI-powered by Claude
         </p>
       </form>
+
+      {/* Character Customization Modal */}
+      {showCharacterSettings && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Customize Your AI Tutor
+                </h2>
+                <button
+                  onClick={() => setShowCharacterSettings(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  ✕
+                </button>
+              </div>
+              <TutorCharacterBuilder
+                initialCharacter={tutorCharacter}
+                onSave={(character) => {
+                  setTutorCharacter(character);
+                  localStorage.setItem('tutorCharacter', JSON.stringify(character));
+                  setShowCharacterSettings(false);
+
+                  // Update greeting message
+                  const newPersonality = PERSONALITY_TRAITS[character.personality];
+                  setMessages([{
+                    role: 'assistant',
+                    content: newPersonality.greetings[Math.floor(Math.random() * newPersonality.greetings.length)],
+                    timestamp: new Date(),
+                    emotion: 'happy',
+                  }]);
+
+                  toast.success(`${character.name} is now your tutor!`);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

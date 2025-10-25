@@ -28,6 +28,8 @@ import AIChat from './pages/student/AIChat';
 import QuizPage from './pages/student/Quiz';
 import GamificationPage from './pages/student/Gamification';
 import Analytics from './pages/student/Analytics';
+import StudentSettings from './pages/student/Settings';
+import StudentMessages from './pages/student/Messages';
 import ProfilePage from './pages/Profile';
 import NotFound from './pages/NotFound';
 
@@ -66,6 +68,8 @@ function App() {
               <Route path="/ai-chat" element={<AIChat />} />
               <Route path="/quiz" element={<QuizPage />} />
               <Route path="/gamification" element={<GamificationPage />} />
+              <Route path="/messages" element={<StudentMessages />} />
+              <Route path="/settings" element={<StudentSettings />} />
 
               {/* Parent Routes */}
               <Route path="/parent-dashboard" element={<ParentDashboard />} />
