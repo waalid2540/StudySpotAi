@@ -19,7 +19,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
       username: parsedConfig.user || 'postgres',
       password: parsedConfig.password,
       database: parsedConfig.database || 'learning_platform',
-      synchronize: false,
+      synchronize: true, // Auto-create tables in production
       logging: process.env.NODE_ENV === 'development',
       entities: process.env.NODE_ENV === 'production'
         ? ['dist/entities/**/*.js']
@@ -44,7 +44,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
     username: process.env.DB_USERNAME || 'postgres',
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE || 'learning_platform',
-    synchronize: false,
+    synchronize: true, // Auto-create tables
     logging: process.env.NODE_ENV === 'development',
     entities: ['src/entities/**/*.ts'],
     migrations: ['src/database/migrations/**/*.ts'],
