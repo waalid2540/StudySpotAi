@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         const demoUser = {
           id: 'demo-user-id',
+          uid: 'demo-user-id',
           email: storedEmail,
           displayName: storedName,
           photoURL: null,
@@ -72,6 +73,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
           const currentUser = {
             id: userData.id,
+            uid: firebaseUser.uid,
             email: userData.email,
             displayName: userData.displayName || firebaseUser.displayName,
             photoURL: userData.photoURL || firebaseUser.photoURL,
@@ -93,6 +95,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           // If we can't fetch the profile, use Firebase data
           const fallbackUser = {
             id: firebaseUser.uid,
+            uid: firebaseUser.uid,
             email: firebaseUser.email || '',
             displayName: firebaseUser.displayName,
             photoURL: firebaseUser.photoURL,
@@ -173,6 +176,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         setUser({
           id: newUser.id,
+          uid: newUser.id,
           email: newUser.email,
           displayName: newUser.displayName,
           photoURL: null,
@@ -242,6 +246,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         setUser({
           id: foundUser.id,
+          uid: foundUser.id,
           email: foundUser.email,
           displayName: foundUser.displayName,
           photoURL: null,

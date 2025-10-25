@@ -258,7 +258,7 @@ const AdminUsers = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
-                        onClick={() => toast.info('Edit user functionality coming soon')}
+                        onClick={() => toast('Edit user functionality coming soon')}
                         className="text-blue-600 hover:text-blue-700 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900"
                       >
                         <Edit className="h-5 w-5" />

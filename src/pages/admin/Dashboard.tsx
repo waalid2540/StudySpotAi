@@ -18,7 +18,7 @@ interface OnlineUser {
   id: string;
   name: string;
   email: string;
-  role: 'student' | 'parent' | 'teacher';
+  role: 'student' | 'parent' | 'teacher' | 'admin';
   status: 'online' | 'away' | 'offline';
   lastSeen: Date;
   currentPage?: string;
