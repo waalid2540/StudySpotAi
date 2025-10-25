@@ -19,7 +19,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Auth API
+// Auth API - Direct backend authentication (no Firebase)
 export const authAPI = {
   register: (data: {
     email: string;
@@ -29,12 +29,14 @@ export const authAPI = {
     role: UserRole;
   }) => api.post('/auth/register', data),
 
-  login: (idToken: string) => api.post('/auth/login', { idToken }),
+  login: (email: string, password: string) => api.post('/auth/login', { email, password }),
 
   getProfile: () => api.get('/auth/profile'),
 
   updateProfile: (data: { displayName?: string; photoURL?: string }) =>
     api.put('/auth/profile', data),
+
+  resetPassword: (email: string) => api.post('/auth/reset-password', { email }),
 };
 
 // Check if running in demo mode (no backend)
