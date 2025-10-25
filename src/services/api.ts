@@ -605,15 +605,15 @@ const demoGamificationData = {
   },
 
   allBadges: [
-    { id: '1', name: 'First Steps', description: 'Complete your first homework', icon: 'star', requirement: 'Complete 1 homework', points: 10, earned: false },
-    { id: '2', name: 'Quick Learner', description: 'Complete 5 homework assignments', icon: 'zap', requirement: 'Complete 5 homework', points: 25, earned: false },
-    { id: '3', name: 'Homework Hero', description: 'Complete 10 homework assignments', icon: 'trophy', requirement: 'Complete 10 homework', points: 50, earned: false },
-    { id: '4', name: 'Quiz Master', description: 'Score 100% on any quiz', icon: 'award', requirement: 'Get perfect score', points: 30, earned: false },
-    { id: '5', name: 'Streak Champion', description: 'Maintain a 7-day learning streak', icon: 'medal', requirement: '7 consecutive days', points: 40, earned: false },
-    { id: '6', name: 'AI Enthusiast', description: 'Use AI helper 10 times', icon: 'crown', requirement: 'Use AI helper 10x', points: 20, earned: false },
-    { id: '7', name: 'Points Collector', description: 'Earn 500 total points', icon: 'star', requirement: 'Reach 500 points', points: 100, earned: false },
-    { id: '8', name: 'Early Bird', description: 'Complete homework before due date 5 times', icon: 'zap', requirement: 'Early completion 5x', points: 35, earned: false },
-    { id: '9', name: 'Perfect Week', description: 'Complete all homework in a week', icon: 'medal', requirement: '100% weekly completion', points: 60, earned: false },
+    { id: '1', name: 'First Steps', description: 'Complete your first homework', icon: 'star', requirement: 'Complete 1 homework', points: 10, earned: false, earnedAt: undefined },
+    { id: '2', name: 'Quick Learner', description: 'Complete 5 homework assignments', icon: 'zap', requirement: 'Complete 5 homework', points: 25, earned: false, earnedAt: undefined },
+    { id: '3', name: 'Homework Hero', description: 'Complete 10 homework assignments', icon: 'trophy', requirement: 'Complete 10 homework', points: 50, earned: false, earnedAt: undefined },
+    { id: '4', name: 'Quiz Master', description: 'Score 100% on any quiz', icon: 'award', requirement: 'Get perfect score', points: 30, earned: false, earnedAt: undefined },
+    { id: '5', name: 'Streak Champion', description: 'Maintain a 7-day learning streak', icon: 'medal', requirement: '7 consecutive days', points: 40, earned: false, earnedAt: undefined },
+    { id: '6', name: 'AI Enthusiast', description: 'Use AI helper 10 times', icon: 'crown', requirement: 'Use AI helper 10x', points: 20, earned: false, earnedAt: undefined },
+    { id: '7', name: 'Points Collector', description: 'Earn 500 total points', icon: 'star', requirement: 'Reach 500 points', points: 100, earned: false, earnedAt: undefined },
+    { id: '8', name: 'Early Bird', description: 'Complete homework before due date 5 times', icon: 'zap', requirement: 'Early completion 5x', points: 35, earned: false, earnedAt: undefined },
+    { id: '9', name: 'Perfect Week', description: 'Complete all homework in a week', icon: 'medal', requirement: '100% weekly completion', points: 60, earned: false, earnedAt: undefined },
   ],
 
   leaderboard: [
