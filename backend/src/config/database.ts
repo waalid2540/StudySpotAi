@@ -1,7 +1,8 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { config } from 'dotenv';
 import { parse } from 'pg-connection-string';
-import * as path from 'path';
+import { User } from '../entities/User';
+import { Subscription } from '../entities/Subscription';
 
 config();
 
@@ -22,7 +23,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
       database: parsedConfig.database || 'learning_platform',
       synchronize: true, // Auto-create tables in production
       logging: true, // Enable logging to debug
-      entities: [path.join(__dirname, '../entities/**/*.{ts,js}')], // Use path.join for reliable resolution
+      entities: [User, Subscription], // Direct class imports - guaranteed to work
       migrations: process.env.NODE_ENV === 'production'
         ? ['dist/database/migrations/**/*.js']
         : ['src/database/migrations/**/*.ts'],
@@ -45,7 +46,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
     database: process.env.DB_DATABASE || 'learning_platform',
     synchronize: true, // Auto-create tables
     logging: true,
-    entities: [path.join(__dirname, '../entities/**/*.{ts,js}')], // Use path.join for reliable resolution
+    entities: [User, Subscription], // Direct class imports - guaranteed to work
     migrations: ['src/database/migrations/**/*.ts'],
     subscribers: [],
     ssl: false,

@@ -7,6 +7,7 @@ import {
   OneToOne,
   OneToMany,
 } from 'typeorm';
+import { Subscription } from './Subscription';
 
 export enum UserRole {
   STUDENT = 'student',
@@ -73,5 +74,3 @@ export class User {
   @OneToMany(() => Subscription, (subscription) => subscription.user)
   subscriptions: Subscription[];
 }
-
-import { Subscription } from './Subscription';
