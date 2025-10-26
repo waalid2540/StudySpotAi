@@ -12,7 +12,7 @@ export class HomeworkController {
   async create(req: any, res: Response): Promise<any> {
     try {
       const { subject, title, description, dueDate, difficulty } = req.body;
-      const studentId = req.user?.uid;
+      const studentId = req.user?.userId;
 
       if (!studentId) {
         return res.status(401).json({ error: 'Not authenticated' });
@@ -54,7 +54,7 @@ export class HomeworkController {
    */
   async getAll(req: any, res: Response): Promise<any> {
     try {
-      const studentId = req.user?.uid;
+      const studentId = req.user?.userId;
 
       if (!studentId) {
         return res.status(401).json({ error: 'Not authenticated' });
@@ -87,7 +87,7 @@ export class HomeworkController {
       }
 
       // Check if user owns this homework
-      if (homework.studentId !== req.user?.uid) {
+      if (homework.studentId !== req.user?.userId) {
         return res.status(403).json({ error: 'Access denied' });
       }
 
@@ -110,7 +110,7 @@ export class HomeworkController {
         return res.status(404).json({ error: 'Homework not found' });
       }
 
-      if (homework.studentId !== req.user?.uid) {
+      if (homework.studentId !== req.user?.userId) {
         return res.status(403).json({ error: 'Access denied' });
       }
 
@@ -152,7 +152,7 @@ export class HomeworkController {
         return res.status(404).json({ error: 'Homework not found' });
       }
 
-      if (homework.studentId !== req.user?.uid) {
+      if (homework.studentId !== req.user?.userId) {
         return res.status(403).json({ error: 'Access denied' });
       }
 
@@ -203,7 +203,7 @@ export class HomeworkController {
         return res.status(404).json({ error: 'Homework not found' });
       }
 
-      if (homework.studentId !== req.user?.uid) {
+      if (homework.studentId !== req.user?.userId) {
         return res.status(403).json({ error: 'Access denied' });
       }
 
