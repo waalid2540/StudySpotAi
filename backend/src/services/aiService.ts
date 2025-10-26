@@ -20,7 +20,7 @@ export class AIService {
   async solveHomework(question: string, subject: string): Promise<string> {
     try {
       const completion = await client!.chat.completions.create({
-        model: 'gpt-5',  // Will fallback to latest available model if gpt-5 not available
+        model: 'gpt-4o',  // Latest GPT-4 model from OpenAI
         max_tokens: 2048,
         messages: [
           {
@@ -58,7 +58,7 @@ Make it educational and encouraging!`,
   ): Promise<QuizQuestion[]> {
     try {
       const completion = await client!.chat.completions.create({
-        model: 'gpt-5',
+        model: 'gpt-4o',
         max_tokens: 3000,
         messages: [
           {
@@ -110,7 +110,7 @@ Make questions educational and age-appropriate.`,
         : 0;
 
       const completion = await client!.chat.completions.create({
-        model: 'gpt-5',
+        model: 'gpt-4o',
         max_tokens: 1500,
         messages: [
           {
@@ -176,7 +176,7 @@ Let me break it down step by step:
 
 Could you share the specific math problem you're working on? I'll guide you through solving it step by step!
 
-*Note: This is a demo response. To enable full AI tutoring with GPT-5, add your OpenAI API key to the .env file.*`;
+*Note: This is a demo response. To enable full AI tutoring with GPT-4o, add your OpenAI API key to the .env file.*`;
         } else if (userInput.includes('essay') || userInput.includes('write') || userInput.includes('introduction')) {
           return `Great question about writing! Here are some tips for writing a strong introduction:
 
@@ -195,7 +195,7 @@ Could you share the specific math problem you're working on? I'll guide you thro
 
 Would you like help with a specific topic you're writing about?
 
-*Note: This is a demo response. To enable full AI tutoring with GPT-5, add your OpenAI API key to the .env file.*`;
+*Note: This is a demo response. To enable full AI tutoring with GPT-4o, add your OpenAI API key to the .env file.*`;
         } else if (userInput.includes('science') || userInput.includes('photosynthesis') || userInput.includes('biology')) {
           return `Excellent science question! Let me explain this concept:
 
@@ -221,7 +221,7 @@ And they create:
 
 What aspect would you like to explore further?
 
-*Note: This is a demo response. To enable full AI tutoring with GPT-5, add your OpenAI API key to the .env file.*`;
+*Note: This is a demo response. To enable full AI tutoring with GPT-4o, add your OpenAI API key to the .env file.*`;
         } else {
           return `I'm here to help you learn! I can assist with:
 
@@ -233,7 +233,7 @@ What aspect would you like to explore further?
 
 What subject are you working on? Feel free to ask me any homework question!
 
-*Note: This is a demo response. To enable full AI tutoring with GPT-5, add your OpenAI API key to the .env file.*`;
+*Note: This is a demo response. To enable full AI tutoring with GPT-4o, add your OpenAI API key to the .env file.*`;
         }
       }
 
@@ -259,7 +259,7 @@ What subject are you working on? Feel free to ask me any homework question!
       });
 
       const completion = await client.chat.completions.create({
-        model: 'gpt-5',
+        model: 'gpt-4o',
         max_tokens: 2048,
         messages: openAIMessages,
       });
