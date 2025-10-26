@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Homework } from '../types';
 
 // In-memory storage (replace with database in production)
-const homeworkStore: Map<string, Homework> = new Map();
+export const homeworkStore: Map<string, Homework> = new Map();
 
 export class HomeworkController {
   /**

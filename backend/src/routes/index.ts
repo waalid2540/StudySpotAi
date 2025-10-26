@@ -78,6 +78,7 @@ router.post('/ai/analyze-image', authenticateUser, aiController.analyzeImage.bin
 router.get('/parents/dashboard', authenticateUser, parentController.getDashboard.bind(parentController));
 router.get('/parents/insights/:studentId', authenticateUser, parentController.getStudentInsights.bind(parentController));
 router.get('/parents/reports/:studentId', authenticateUser, parentController.getProgressReports.bind(parentController));
+router.get('/parents/homework/:studentId', authenticateUser, parentController.getChildHomework.bind(parentController));
 router.post('/parents/link-child', authenticateUser, parentController.linkChild.bind(parentController));
 router.get('/parents/notifications', authenticateUser, parentController.getNotifications.bind(parentController));
 

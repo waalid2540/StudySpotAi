@@ -1,7 +1,8 @@
 import { Response } from 'express';
 import { aiService } from '../services/aiService';
+import { homeworkStore } from './homeworkController';
 
-// Mock data storage
+// Parent-child links storage
 const childrenLinks: Map<string, string[]> = new Map();
 
 export class ParentController {
@@ -10,34 +11,43 @@ export class ParentController {
    */
   async getDashboard(req: any, res: Response): Promise<any> {
     try {
-      const parentId = req.user?.uid;
+      const parentId = req.user?.userId;
       const children = childrenLinks.get(parentId) || [];
 
-      // Mock dashboard data
+      // Get REAL homework for each linked child
+      const overview = children.map(childId => {
+        // Get all homework for this child
+        const childHomework = Array.from(homeworkStore.values())
+          .filter(hw => hw.studentId === childId);
+
+        const completedHomework = childHomework.filter(hw => hw.status === 'completed').length;
+        const pendingHomework = childHomework.filter(hw => hw.status === 'pending').length;
+
+        // Get recent activity (last 5 homework items)
+        const recentActivity = childHomework
+          .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+          .slice(0, 5)
+          .map(hw => ({
+            type: hw.status === 'completed' ? 'homework_completed' : 'homework_assigned',
+            title: hw.title,
+            subject: hw.subject,
+            status: hw.status,
+            timestamp: hw.updatedAt,
+          }));
+
+        return {
+          childId,
+          name: 'Student', // You can add student names later from User table
+          completedHomework,
+          pendingHomework,
+          totalHomework: childHomework.length,
+          recentActivity,
+        };
+      });
+
       const dashboardData = {
         totalChildren: children.length,
-        overview: children.map(childId => ({
-          childId,
-          name: 'Student Name',
-          completedHomework: 15,
-          pendingHomework: 3,
-          averageScore: 85,
-          totalPoints: 450,
-          badges: 8,
-          recentActivity: [
-            {
-              type: 'homework_completed',
-              title: 'Math Assignment',
-              timestamp: new Date(),
-            },
-            {
-              type: 'quiz_completed',
-              title: 'Science Quiz',
-              score: 90,
-              timestamp: new Date(),
-            },
-          ],
-        })),
+        overview,
       };
 
       res.json(dashboardData);
@@ -184,7 +194,7 @@ export class ParentController {
    */
   async linkChild(req: any, res: Response): Promise<any> {
     try {
-      const parentId = req.user?.uid;
+      const parentId = req.user?.userId;
       const { childId } = req.body;
 
       if (!childId) {
@@ -204,6 +214,36 @@ export class ParentController {
     } catch (error: any) {
       console.error('Link Child Error:', error);
       res.status(500).json({ error: error.message || 'Failed to link child' });
+    }
+  }
+
+  /**
+   * Get child's homework
+   */
+  async getChildHomework(req: any, res: Response): Promise<any> {
+    try {
+      const parentId = req.user?.userId;
+      const { studentId } = req.params;
+
+      // Check if parent has access to this child
+      const children = childrenLinks.get(parentId) || [];
+      if (!children.includes(studentId)) {
+        return res.status(403).json({ error: 'You do not have access to this student' });
+      }
+
+      // Get all homework for this child
+      const homework = Array.from(homeworkStore.values())
+        .filter(hw => hw.studentId === studentId)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+      res.json({
+        studentId,
+        homework,
+        total: homework.length,
+      });
+    } catch (error: any) {
+      console.error('Get Child Homework Error:', error);
+      res.status(500).json({ error: error.message || 'Failed to get homework' });
     }
   }
 
