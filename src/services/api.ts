@@ -41,9 +41,8 @@ export const authAPI = {
 
 // Check if running in demo mode (no backend)
 const isDemoMode = () => {
-  const token = localStorage.getItem('authToken');
-  // If token exists and starts with mock pattern, we're in demo mode
-  return token && token.startsWith('eyJ');
+  // We're NEVER in demo mode - always use real backend API
+  return false;
 };
 
 // Demo homework storage (persisted to localStorage)
