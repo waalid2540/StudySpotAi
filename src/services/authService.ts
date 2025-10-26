@@ -20,8 +20,8 @@ class AuthService {
       });
 
       // Store token and user data from backend
-      const { token, user } = response.data;
-      localStorage.setItem('authToken', token);
+      const { accessToken, user } = response.data;
+      localStorage.setItem('authToken', accessToken);
       localStorage.setItem('userEmail', user.email);
       localStorage.setItem('userName', user.displayName || `${data.firstName} ${data.lastName}`);
       localStorage.setItem('userRole', user.role);
@@ -43,8 +43,8 @@ class AuthService {
       const response = await authAPI.login(data.email, data.password);
 
       // Store token and user data from backend
-      const { token, user } = response.data;
-      localStorage.setItem('authToken', token);
+      const { accessToken, user } = response.data;
+      localStorage.setItem('authToken', accessToken);
       localStorage.setItem('userEmail', user.email);
       localStorage.setItem('userName', user.displayName || user.email);
       localStorage.setItem('userRole', user.role);
