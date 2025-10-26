@@ -21,6 +21,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
       username: parsedConfig.user || 'postgres',
       password: parsedConfig.password,
       database: parsedConfig.database || 'learning_platform',
+      dropSchema: true, // TEMPORARY: Drop all tables and recreate fresh schema
       synchronize: true, // Auto-create tables in production
       logging: true, // Enable logging to debug
       entities: [User, Subscription], // Direct class imports - guaranteed to work
