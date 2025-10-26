@@ -1,10 +1,10 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { QuizQuestion } from '../types';
 
-const hasValidApiKey = process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY.length > 10;
+const hasValidApiKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.length > 10;
 
-const client = hasValidApiKey ? new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
+const client = hasValidApiKey ? new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
 }) : null;
 
 export class AIService {
@@ -19,8 +19,8 @@ export class AIService {
    */
   async solveHomework(question: string, subject: string): Promise<string> {
     try {
-      const message = await (client as any).messages.create({
-        model: 'claude-3-5-sonnet-20241022',
+      const completion = await client!.chat.completions.create({
+        model: 'gpt-5',  // Will fallback to latest available model if gpt-5 not available
         max_tokens: 2048,
         messages: [
           {
@@ -40,8 +40,7 @@ Make it educational and encouraging!`,
         ],
       });
 
-      const content = message.content[0];
-      return content.type === 'text' ? content.text : 'Unable to generate solution';
+      return completion.choices[0]?.message?.content || 'Unable to generate solution';
     } catch (error) {
       console.error('AI Service Error:', error);
       throw new Error('Failed to generate homework solution');
@@ -58,8 +57,8 @@ Make it educational and encouraging!`,
     numQuestions: number = 5
   ): Promise<QuizQuestion[]> {
     try {
-      const message = await (client as any).messages.create({
-        model: 'claude-3-5-sonnet-20241022',
+      const completion = await client!.chat.completions.create({
+        model: 'gpt-5',
         max_tokens: 3000,
         messages: [
           {
@@ -85,12 +84,10 @@ Make questions educational and age-appropriate.`,
         ],
       });
 
-      const content = message.content[0];
-      if (content.type === 'text') {
-        const jsonMatch = content.text.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-          return JSON.parse(jsonMatch[0]);
-        }
+      const content = completion.choices[0]?.message?.content || '';
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
       }
       throw new Error('Invalid quiz format');
     } catch (error) {
@@ -112,8 +109,8 @@ Make questions educational and age-appropriate.`,
         ? quizScores.reduce((a, b) => a + b, 0) / quizScores.length
         : 0;
 
-      const message = await (client as any).messages.create({
-        model: 'claude-3-5-sonnet-20241022',
+      const completion = await client!.chat.completions.create({
+        model: 'gpt-5',
         max_tokens: 1500,
         messages: [
           {
@@ -134,12 +131,10 @@ Provide a JSON response with:
         ],
       });
 
-      const content = message.content[0];
-      if (content.type === 'text') {
-        const jsonMatch = content.text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          return JSON.parse(jsonMatch[0]);
-        }
+      const content = completion.choices[0]?.message?.content || '';
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
       }
 
       return {
@@ -181,7 +176,7 @@ Let me break it down step by step:
 
 Could you share the specific math problem you're working on? I'll guide you through solving it step by step!
 
-*Note: This is a demo response. To enable full AI tutoring with Claude, add your Anthropic API key to the .env file.*`;
+*Note: This is a demo response. To enable full AI tutoring with GPT-5, add your OpenAI API key to the .env file.*`;
         } else if (userInput.includes('essay') || userInput.includes('write') || userInput.includes('introduction')) {
           return `Great question about writing! Here are some tips for writing a strong introduction:
 
@@ -200,7 +195,7 @@ Could you share the specific math problem you're working on? I'll guide you thro
 
 Would you like help with a specific topic you're writing about?
 
-*Note: This is a demo response. To enable full AI tutoring with Claude, add your Anthropic API key to the .env file.*`;
+*Note: This is a demo response. To enable full AI tutoring with GPT-5, add your OpenAI API key to the .env file.*`;
         } else if (userInput.includes('science') || userInput.includes('photosynthesis') || userInput.includes('biology')) {
           return `Excellent science question! Let me explain this concept:
 
@@ -226,7 +221,7 @@ And they create:
 
 What aspect would you like to explore further?
 
-*Note: This is a demo response. To enable full AI tutoring with Claude, add your Anthropic API key to the .env file.*`;
+*Note: This is a demo response. To enable full AI tutoring with GPT-5, add your OpenAI API key to the .env file.*`;
         } else {
           return `I'm here to help you learn! I can assist with:
 
@@ -238,7 +233,7 @@ What aspect would you like to explore further?
 
 What subject are you working on? Feel free to ask me any homework question!
 
-*Note: This is a demo response. To enable full AI tutoring with Claude, add your Anthropic API key to the .env file.*`;
+*Note: This is a demo response. To enable full AI tutoring with GPT-5, add your OpenAI API key to the .env file.*`;
         }
       }
 
@@ -247,20 +242,29 @@ What subject are you working on? Feel free to ask me any homework question!
         throw new Error('AI service not initialized');
       }
 
-      const anthropicMessages = messages.map(msg => ({
-        role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
-        content: msg.content,
-      }));
+      // Prepare messages for OpenAI (which uses system/user/assistant roles)
+      const openAIMessages: any[] = [
+        {
+          role: 'system',
+          content: 'You are a helpful, patient, and encouraging AI tutor. Help students learn by explaining concepts clearly, asking guiding questions, and providing examples. Be supportive and positive.',
+        }
+      ];
 
-      const message = await (client as any).messages.create({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 2048,
-        messages: anthropicMessages,
-        system: 'You are a helpful, patient, and encouraging AI tutor. Help students learn by explaining concepts clearly, asking guiding questions, and providing examples. Be supportive and positive.',
+      // Add conversation history
+      messages.forEach(msg => {
+        openAIMessages.push({
+          role: msg.role,
+          content: msg.content,
+        });
       });
 
-      const content = message.content[0];
-      return content.type === 'text' ? content.text : 'I apologize, but I could not generate a response.';
+      const completion = await client.chat.completions.create({
+        model: 'gpt-5',
+        max_tokens: 2048,
+        messages: openAIMessages,
+      });
+
+      return completion.choices[0]?.message?.content || 'I apologize, but I could not generate a response.';
     } catch (error) {
       console.error('Chat Error:', error);
       throw new Error('Failed to process chat message');
