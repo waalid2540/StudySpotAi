@@ -734,8 +734,15 @@ const HomeworkPage = () => {
                     required
                     value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-600 focus:border-transparent cursor-pointer hover:border-primary-500 transition-colors"
+                    style={{
+                      colorScheme: 'light dark',
+                    }}
                   />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Click to open calendar picker
+                  </p>
                 </div>
 
                 <div>
