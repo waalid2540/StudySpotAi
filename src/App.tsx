@@ -13,6 +13,7 @@ import PublicRoute from './components/PublicRoute';
 // Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
 import StudentDashboard from './pages/student/Dashboard';
 import ParentDashboard from './pages/parent/Dashboard';
 import ParentChildren from './pages/parent/Children';
@@ -54,6 +55,7 @@ function App() {
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
             </Route>
           </Route>
 
