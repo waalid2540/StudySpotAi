@@ -13,6 +13,7 @@
     "migration:revert": "npm run typeorm migration:revert -- -d src/config/database.ts",
     "seed": "ts-node src/database/seeds/index.ts",
     "appoint-admin": "ts-node src/scripts/appointAdmin.ts",
+    "update-admin-privacy": "ts-node src/scripts/updateAdminPrivacy.ts",
     "test": "jest",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""

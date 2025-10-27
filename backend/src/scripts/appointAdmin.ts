@@ -56,8 +56,9 @@ async function appointAdmin(email: string): Promise<void> {
 
     const previousRole = user.role;
 
-    // Set admin role
+    // Set admin role and make profile private forever
     user.role = UserRole.ADMIN;
+    user.profile_private = true;
     await userRepository.save(user);
 
     console.log(`✅ Successfully appointed ${email} as admin!`);
@@ -67,6 +68,7 @@ async function appointAdmin(email: string): Promise<void> {
     console.log(`   - ID: ${user.id}`);
     console.log(`   - Previous Role: ${previousRole}`);
     console.log(`   - New Role: ${user.role}`);
+    console.log(`   - Profile Privacy: PRIVATE (hidden from non-admins)`);
     console.log(`\n✨ The user will need to log out and log back in for changes to take effect.\n`);
 
     await AppDataSource.destroy();

@@ -62,6 +62,9 @@ export class User {
   @Column({ default: true })
   is_active: boolean;
 
+  @Column({ default: false })
+  profile_private: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 
