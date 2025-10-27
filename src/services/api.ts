@@ -36,7 +36,10 @@ export const authAPI = {
   updateProfile: (data: { displayName?: string; photoURL?: string }) =>
     api.put('/auth/profile', data),
 
-  resetPassword: (email: string) => api.post('/auth/reset-password', { email }),
+  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+
+  resetPassword: (email: string, code: string, newPassword: string) =>
+    api.post('/auth/reset-password', { email, code, newPassword }),
 };
 
 // Check if running in demo mode (no backend)

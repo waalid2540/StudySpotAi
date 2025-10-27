@@ -10,6 +10,9 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-super-secret-
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '30d';
 
+// Store password reset codes in memory (expires in 10 minutes)
+const resetCodes = new Map<string, { code: string; expiresAt: Date }>();
+
 export class AuthController {
   /**
    * Register new user
@@ -262,6 +265,101 @@ export class AuthController {
     } catch (error: any) {
       console.error('Update profile error:', error);
       res.status(500).json({ error: error.message || 'Failed to update profile' });
+    }
+  }
+
+  /**
+   * Request password reset code
+   */
+  async forgotPassword(req: Request, res: Response): Promise<any> {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+
+      const userRepository = AppDataSource.getRepository(User);
+      const user = await userRepository.findOne({ where: { email } });
+
+      if (!user) {
+        return res.status(404).json({ error: 'No account found with this email' });
+      }
+
+      // Generate 6-digit code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // Store code with 10-minute expiration
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      resetCodes.set(email, { code, expiresAt });
+
+      // Return the code (in production, you'd email this)
+      res.json({
+        message: 'Password reset code generated',
+        resetCode: code, // SHOWN ON SCREEN (not emailed)
+        expiresIn: '10 minutes',
+      });
+    } catch (error: any) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ error: error.message || 'Failed to generate reset code' });
+    }
+  }
+
+  /**
+   * Reset password with code
+   */
+  async resetPassword(req: Request, res: Response): Promise<any> {
+    try {
+      const { email, code, newPassword } = req.body;
+
+      if (!email || !code || !newPassword) {
+        return res.status(400).json({ error: 'Email, code, and new password are required' });
+      }
+
+      // Validate new password
+      if (newPassword.length < 8) {
+        return res.status(400).json({ error: 'New password must be at least 8 characters long' });
+      }
+
+      // Check if code exists and is valid
+      const resetData = resetCodes.get(email);
+      if (!resetData) {
+        return res.status(400).json({ error: 'Invalid or expired reset code' });
+      }
+
+      // Check if code matches
+      if (resetData.code !== code) {
+        return res.status(400).json({ error: 'Invalid reset code' });
+      }
+
+      // Check if code is expired
+      if (new Date() > resetData.expiresAt) {
+        resetCodes.delete(email);
+        return res.status(400).json({ error: 'Reset code has expired. Please request a new one.' });
+      }
+
+      // Update password
+      const userRepository = AppDataSource.getRepository(User);
+      const user = await userRepository.findOne({ where: { email } });
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Hash new password
+      const password_hash = await bcrypt.hash(newPassword, 12);
+      user.password_hash = password_hash;
+      await userRepository.save(user);
+
+      // Delete used code
+      resetCodes.delete(email);
+
+      res.json({
+        message: 'Password reset successfully',
+      });
+    } catch (error: any) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ error: error.message || 'Failed to reset password' });
     }
   }
 

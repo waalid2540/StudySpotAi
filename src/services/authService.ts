@@ -70,13 +70,27 @@ class AuthService {
   }
 
   /**
-   * Reset password
+   * Request password reset code
    */
-  async resetPassword(email: string): Promise<void> {
+  async forgotPassword(email: string): Promise<string> {
     try {
-      await authAPI.resetPassword(email);
+      const response = await authAPI.forgotPassword(email);
+      return response.data.resetCode; // Returns 6-digit code
     } catch (error: any) {
-      console.error('Password reset error:', error);
+      console.error('Forgot password error:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to request reset code';
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Reset password with code
+   */
+  async resetPassword(email: string, code: string, newPassword: string): Promise<void> {
+    try {
+      await authAPI.resetPassword(email, code, newPassword);
+    } catch (error: any) {
+      console.error('Reset password error:', error);
       const errorMessage = error.response?.data?.error || error.message || 'Password reset failed';
       throw new Error(errorMessage);
     }

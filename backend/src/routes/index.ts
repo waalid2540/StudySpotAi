@@ -50,6 +50,8 @@ router.get('/', (_req, res) => {
 // ============================================================
 router.post('/auth/register', authController.register.bind(authController));
 router.post('/auth/login', authController.login.bind(authController));
+router.post('/auth/forgot-password', authController.forgotPassword.bind(authController));
+router.post('/auth/reset-password', authController.resetPassword.bind(authController));
 router.get('/auth/profile', authenticateUser, authController.getProfile.bind(authController));
 router.put('/auth/profile', authenticateUser, authController.updateProfile.bind(authController));
 

@@ -142,10 +142,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const resetPassword = async (email: string): Promise<void> => {
+  const forgotPassword = async (email: string): Promise<string> => {
     try {
       setError(null);
-      await authService.resetPassword(email);
+      const code = await authService.forgotPassword(email);
+      return code;
+    } catch (error: any) {
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email: string, code: string, newPassword: string): Promise<void> => {
+    try {
+      setError(null);
+      await authService.resetPassword(email, code, newPassword);
     } catch (error: any) {
       setError(error.message);
       throw error;
@@ -182,6 +193,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     register,
     login,
     logout,
+    forgotPassword,
     resetPassword,
     updateUserProfile,
   };
