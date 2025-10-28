@@ -195,20 +195,43 @@ export class ParentController {
   async linkChild(req: any, res: Response): Promise<any> {
     try {
       const parentId = req.user?.userId;
-      const { childId } = req.body;
+      const { childId, childEmail } = req.body;
 
-      if (!childId) {
-        return res.status(400).json({ error: 'Child ID is required' });
+      // Support linking by either childId or childEmail
+      let studentId = childId;
+
+      // If email is provided, look up the student by email
+      if (childEmail) {
+        const { AppDataSource } = require('../config/database');
+        const { User } = require('../entities/User');
+
+        const userRepository = AppDataSource.getRepository(User);
+        const student = await userRepository.findOne({
+          where: { email: childEmail, role: 'student' }
+        });
+
+        if (!student) {
+          return res.status(404).json({
+            error: 'No student account found with this email. The child needs to register as a student first.'
+          });
+        }
+
+        studentId = student.id;
+      }
+
+      if (!studentId) {
+        return res.status(400).json({ error: 'Child ID or email is required' });
       }
 
       const children = childrenLinks.get(parentId) || [];
-      if (!children.includes(childId)) {
-        children.push(childId);
+      if (!children.includes(studentId)) {
+        children.push(studentId);
         childrenLinks.set(parentId, children);
       }
 
       res.json({
         message: 'Child linked successfully',
+        studentId: studentId,
         linkedChildren: children,
       });
     } catch (error: any) {

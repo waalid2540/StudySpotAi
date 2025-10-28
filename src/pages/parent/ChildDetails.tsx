@@ -71,11 +71,46 @@ const ParentChildDetails = () => {
   const fetchChildHomework = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/parents/homework/${childId}`);
+
+      if (!child?.email) {
+        toast.error('Child email is required');
+        setLoading(false);
+        return;
+      }
+
+      // Step 1: Link the child using their email to get the real student ID
+      let realStudentId = childId;
+      try {
+        const linkResponse = await api.post('/parents/link-child', { childEmail: child.email });
+        realStudentId = linkResponse.data.studentId;
+        console.log('Child linked successfully, real student ID:', realStudentId);
+      } catch (linkError: any) {
+        console.error('Child linking error:', linkError);
+
+        // Handle specific error cases
+        if (linkError.response?.status === 404) {
+          toast.error(`${child.email} needs to register as a student first to view homework`);
+          setLoading(false);
+          return;
+        }
+        // If already linked or other error, try to continue with original ID
+        console.log('Continuing with original ID:', childId);
+      }
+
+      // Step 2: Fetch homework using the real student ID
+      const response = await api.get(`/parents/homework/${realStudentId}`);
       setHomework(response.data.homework || []);
     } catch (error: any) {
       console.error('Error fetching child homework:', error);
-      toast.error('Failed to load homework data');
+
+      // More user-friendly error messages
+      if (error.response?.status === 403) {
+        toast.error('Access denied. Make sure the child is registered as a student.');
+      } else if (error.response?.status === 404) {
+        toast.error('No student account found. The child needs to register first.');
+      } else {
+        toast.error(error.response?.data?.error || 'Failed to load homework data');
+      }
       setHomework([]);
     } finally {
       setLoading(false);
@@ -229,7 +264,22 @@ const ParentChildDetails = () => {
         ) : homework.length === 0 ? (
           <div className="text-center py-12">
             <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-4 text-gray-500 dark:text-gray-400">No homework found for this child</p>
+            <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
+              No homework found
+            </h3>
+            <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+              Make sure <strong>{child.email}</strong> is registered as a student and has created some homework assignments.
+            </p>
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg max-w-md mx-auto">
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                <strong>How it works:</strong>
+              </p>
+              <ol className="mt-2 text-sm text-blue-700 dark:text-blue-400 text-left space-y-1">
+                <li>1. Your child registers at StudySpot with <strong>{child.email}</strong></li>
+                <li>2. They create homework assignments as a student</li>
+                <li>3. You'll be able to see their progress here</li>
+              </ol>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
