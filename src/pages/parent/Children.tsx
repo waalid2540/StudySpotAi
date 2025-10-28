@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   User,
   Plus,
@@ -37,6 +38,7 @@ interface Child {
 
 const ParentChildren = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [children, setChildren] = useState<Child[]>([]);
 
   // Load children from localStorage on mount
@@ -294,7 +296,10 @@ const ParentChildren = () => {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2">
-                <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                <button
+                  onClick={() => navigate(`/parent/children/${child.id}`)}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                >
                   <Eye className="h-4 w-4" />
                   View Details
                 </button>

@@ -17,6 +17,7 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import StudentDashboard from './pages/student/Dashboard';
 import ParentDashboard from './pages/parent/Dashboard';
 import ParentChildren from './pages/parent/Children';
+import ParentChildDetails from './pages/parent/ChildDetails';
 import ParentMessages from './pages/parent/Messages';
 import ParentReports from './pages/parent/Reports';
 import ParentBilling from './pages/parent/Billing';
@@ -76,6 +77,7 @@ function App() {
               {/* Parent Routes */}
               <Route path="/parent-dashboard" element={<ParentDashboard />} />
               <Route path="/parent/children" element={<ParentChildren />} />
+              <Route path="/parent/children/:childId" element={<ParentChildDetails />} />
               <Route path="/parent/messages" element={<ParentMessages />} />
               <Route path="/parent/reports" element={<ParentReports />} />
               <Route path="/parent/billing" element={<ParentBilling />} />
