@@ -13,7 +13,7 @@ import {
   User,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { api } from '../../services/api';
+import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { storageService } from '../../services/storageService';
 
