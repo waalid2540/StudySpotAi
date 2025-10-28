@@ -14,8 +14,19 @@ export class HomeworkController {
       const { subject, title, description, dueDate, difficulty } = req.body;
       const studentId = req.user?.userId;
 
+      console.log('Creating homework:', { subject, title, description, dueDate, difficulty, studentId });
+
       if (!studentId) {
         return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      // Validation
+      if (!subject || !title || !dueDate) {
+        return res.status(400).json({
+          error: 'Missing required fields',
+          required: ['subject', 'title', 'dueDate'],
+          received: { subject: !!subject, title: !!title, dueDate: !!dueDate }
+        });
       }
 
       const homework: Homework = {
@@ -23,7 +34,7 @@ export class HomeworkController {
         studentId,
         subject,
         title,
-        description,
+        description: description || '',
         dueDate: new Date(dueDate),
         status: 'pending',
         difficulty: difficulty || 'medium',
@@ -32,6 +43,7 @@ export class HomeworkController {
       };
 
       homeworkStore.set(homework.id, homework);
+      console.log('Homework created successfully:', homework.id);
 
       // Emit real-time event for parent monitoring
       const io = req.app.get('io');
@@ -45,6 +57,7 @@ export class HomeworkController {
       });
     } catch (error: any) {
       console.error('Create homework error:', error);
+      console.error('Error stack:', error.stack);
       res.status(500).json({ error: error.message || 'Failed to create homework' });
     }
   }
