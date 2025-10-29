@@ -11,6 +11,7 @@ import {
   Trophy,
   Target,
   User,
+  Info,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
@@ -51,6 +52,7 @@ const ParentChildDetails = () => {
   const [child, setChild] = useState<Child | null>(null);
   const [homework, setHomework] = useState<Homework[]>([]);
   const [loading, setLoading] = useState(true);
+  const [linkingStatus, setLinkingStatus] = useState<'checking' | 'linked' | 'not_found' | 'error'>('checking');
 
   useEffect(() => {
     if (!childId) return;
@@ -71,44 +73,70 @@ const ParentChildDetails = () => {
   const fetchChildHomework = async () => {
     try {
       setLoading(true);
+      setLinkingStatus('checking');
 
       if (!child?.email) {
         toast.error('Child email is required');
         setLoading(false);
+        setLinkingStatus('error');
         return;
       }
+
+      console.log('🔍 Starting to link child with email:', child.email);
 
       // Step 1: Link the child using their email to get the real student ID
       let realStudentId = childId;
       try {
         const linkResponse = await api.post('/parents/link-child', { childEmail: child.email });
         realStudentId = linkResponse.data.studentId;
-        console.log('Child linked successfully, real student ID:', realStudentId);
+        console.log('✅ Child linked successfully!');
+        console.log('   - Child Email:', child.email);
+        console.log('   - Real Student ID:', realStudentId);
+        setLinkingStatus('linked');
+        toast.success(`Connected to ${child.name}'s account!`);
       } catch (linkError: any) {
-        console.error('Child linking error:', linkError);
+        console.error('❌ Child linking error:', linkError);
+        console.error('   - Status:', linkError.response?.status);
+        console.error('   - Error:', linkError.response?.data);
 
         // Handle specific error cases
         if (linkError.response?.status === 404) {
-          toast.error(`${child.email} needs to register as a student first to view homework`);
+          setLinkingStatus('not_found');
+          toast.error(`No student account found for ${child.email}. They need to register first.`);
           setLoading(false);
           return;
         }
         // If already linked or other error, try to continue with original ID
-        console.log('Continuing with original ID:', childId);
+        console.log('⚠️ Continuing with original ID:', childId);
+        setLinkingStatus('error');
       }
+
+      console.log('📚 Fetching homework for student ID:', realStudentId);
 
       // Step 2: Fetch homework using the real student ID
       const response = await api.get(`/parents/homework/${realStudentId}`);
+      console.log('✅ Homework fetched:', response.data);
       setHomework(response.data.homework || []);
+
+      if (response.data.homework && response.data.homework.length > 0) {
+        console.log(`   - Found ${response.data.homework.length} homework assignment(s)`);
+      } else {
+        console.log('   - No homework found for this student');
+      }
     } catch (error: any) {
-      console.error('Error fetching child homework:', error);
+      console.error('❌ Error fetching child homework:', error);
+      console.error('   - Status:', error.response?.status);
+      console.error('   - Error:', error.response?.data);
 
       // More user-friendly error messages
       if (error.response?.status === 403) {
+        setLinkingStatus('error');
         toast.error('Access denied. Make sure the child is registered as a student.');
       } else if (error.response?.status === 404) {
+        setLinkingStatus('not_found');
         toast.error('No student account found. The child needs to register first.');
       } else {
+        setLinkingStatus('error');
         toast.error(error.response?.data?.error || 'Failed to load homework data');
       }
       setHomework([]);
@@ -204,6 +232,41 @@ const ParentChildDetails = () => {
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             {child.grade} • {child.email}
           </p>
+        </div>
+      </div>
+
+      {/* Debug Info Panel */}
+      <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 p-4">
+        <div className="flex items-start gap-3">
+          <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+          <div className="flex-1">
+            <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Connection Status</h3>
+            <div className="space-y-1 text-sm">
+              <p className="text-blue-800 dark:text-blue-200">
+                <strong>Child Email:</strong> {child.email}
+              </p>
+              <p className="text-blue-800 dark:text-blue-200">
+                <strong>Status:</strong>{' '}
+                {linkingStatus === 'checking' && '🔍 Checking...'}
+                {linkingStatus === 'linked' && '✅ Connected to student account'}
+                {linkingStatus === 'not_found' && '❌ No student account found'}
+                {linkingStatus === 'error' && '⚠️ Connection error'}
+              </p>
+              <p className="text-blue-800 dark:text-blue-200">
+                <strong>Homework Found:</strong> {homework.length} assignment(s)
+              </p>
+            </div>
+            {linkingStatus === 'not_found' && (
+              <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <strong>Action Required:</strong> The email <strong>{child.email}</strong> needs to create a student account at StudySpot first.
+                </p>
+              </div>
+            )}
+            <p className="mt-2 text-xs text-blue-600 dark:text-blue-400">
+              💡 Open browser console (F12) to see detailed logs
+            </p>
+          </div>
         </div>
       </div>
 
