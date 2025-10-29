@@ -5,6 +5,40 @@ import { homeworkStore } from './homeworkController';
 // Parent-child links storage
 const childrenLinks: Map<string, string[]> = new Map();
 
+// Student link codes storage: linkCode -> studentId
+const linkCodes: Map<string, string> = new Map();
+
+// Generate a random 6-character link code
+function generateLinkCode(): string {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return code;
+}
+
+// Get or create link code for a student
+function getOrCreateLinkCode(studentId: string): string {
+  // Check if student already has a link code
+  for (const [code, id] of linkCodes.entries()) {
+    if (id === studentId) {
+      return code;
+    }
+  }
+
+  // Generate new link code
+  let newCode = generateLinkCode();
+  // Ensure code is unique
+  while (linkCodes.has(newCode)) {
+    newCode = generateLinkCode();
+  }
+
+  linkCodes.set(newCode, studentId);
+  console.log(`Generated link code ${newCode} for student ${studentId}`);
+  return newCode;
+}
+
 export class ParentController {
   /**
    * Get parent dashboard overview
@@ -190,18 +224,30 @@ export class ParentController {
   }
 
   /**
-   * Link child to parent account
+   * Link child to parent account using link code
    */
   async linkChild(req: any, res: Response): Promise<any> {
     try {
       const parentId = req.user?.userId;
-      const { childId, childEmail } = req.body;
+      const { linkCode, childEmail } = req.body;
 
-      // Support linking by either childId or childEmail
-      let studentId = childId;
+      let studentId: string | undefined;
 
-      // If email is provided, look up the student by email
-      if (childEmail) {
+      // Priority 1: Link by code (preferred method)
+      if (linkCode) {
+        const upperCode = linkCode.toUpperCase();
+        studentId = linkCodes.get(upperCode);
+
+        if (!studentId) {
+          return res.status(404).json({
+            error: 'Invalid link code. Please check the code and try again.'
+          });
+        }
+
+        console.log(`✅ Linked child using code: ${upperCode} -> Student ID: ${studentId}`);
+      }
+      // Fallback: Link by email (for backwards compatibility)
+      else if (childEmail) {
         const { AppDataSource } = require('../config/database');
         const { User } = require('../entities/User');
 
@@ -212,15 +258,16 @@ export class ParentController {
 
         if (!student) {
           return res.status(404).json({
-            error: 'No student account found with this email. The child needs to register as a student first.'
+            error: 'No student account found with this email. Please use the student\'s link code instead.'
           });
         }
 
         studentId = student.id;
+        console.log(`✅ Linked child using email: ${childEmail} -> Student ID: ${studentId}`);
       }
 
       if (!studentId) {
-        return res.status(400).json({ error: 'Child ID or email is required' });
+        return res.status(400).json({ error: 'Link code or email is required' });
       }
 
       const children = childrenLinks.get(parentId) || [];
@@ -237,6 +284,31 @@ export class ParentController {
     } catch (error: any) {
       console.error('Link Child Error:', error);
       res.status(500).json({ error: error.message || 'Failed to link child' });
+    }
+  }
+
+  /**
+   * Get student's link code (for students to share with parents)
+   */
+  async getStudentLinkCode(req: any, res: Response): Promise<any> {
+    try {
+      const studentId = req.user?.userId;
+
+      if (!studentId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      // Get or create link code for this student
+      const linkCode = getOrCreateLinkCode(studentId);
+
+      res.json({
+        studentId,
+        linkCode,
+        message: 'Share this code with your parents to let them monitor your progress'
+      });
+    } catch (error: any) {
+      console.error('Get Link Code Error:', error);
+      res.status(500).json({ error: error.message || 'Failed to get link code' });
     }
   }
 

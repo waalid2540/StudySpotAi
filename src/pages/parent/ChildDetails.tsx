@@ -35,6 +35,7 @@ interface Child {
   id: string;
   name: string;
   email: string;
+  linkCode?: string;
   grade: string;
   age: number;
   stats: {
@@ -75,22 +76,22 @@ const ParentChildDetails = () => {
       setLoading(true);
       setLinkingStatus('checking');
 
-      if (!child?.email) {
-        toast.error('Child email is required');
+      if (!child?.linkCode) {
+        toast.error('Link code is required');
         setLoading(false);
         setLinkingStatus('error');
         return;
       }
 
-      console.log('🔍 Starting to link child with email:', child.email);
+      console.log('🔍 Starting to link child with code:', child.linkCode);
 
-      // Step 1: Link the child using their email to get the real student ID
+      // Step 1: Link the child using their link code to get the real student ID
       let realStudentId = childId;
       try {
-        const linkResponse = await api.post('/parents/link-child', { childEmail: child.email });
+        const linkResponse = await api.post('/parents/link-child', { linkCode: child.linkCode });
         realStudentId = linkResponse.data.studentId;
         console.log('✅ Child linked successfully!');
-        console.log('   - Child Email:', child.email);
+        console.log('   - Link Code:', child.linkCode);
         console.log('   - Real Student ID:', realStudentId);
         setLinkingStatus('linked');
         toast.success(`Connected to ${child.name}'s account!`);
@@ -102,7 +103,7 @@ const ParentChildDetails = () => {
         // Handle specific error cases
         if (linkError.response?.status === 404) {
           setLinkingStatus('not_found');
-          toast.error(`No student account found for ${child.email}. They need to register first.`);
+          toast.error(`Invalid link code. Please check the code and try again.`);
           setLoading(false);
           return;
         }
@@ -243,13 +244,13 @@ const ParentChildDetails = () => {
             <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Connection Status</h3>
             <div className="space-y-1 text-sm">
               <p className="text-blue-800 dark:text-blue-200">
-                <strong>Child Email:</strong> {child.email}
+                <strong>Link Code:</strong> <span className="font-mono text-lg">{child.linkCode}</span>
               </p>
               <p className="text-blue-800 dark:text-blue-200">
                 <strong>Status:</strong>{' '}
                 {linkingStatus === 'checking' && '🔍 Checking...'}
                 {linkingStatus === 'linked' && '✅ Connected to student account'}
-                {linkingStatus === 'not_found' && '❌ No student account found'}
+                {linkingStatus === 'not_found' && '❌ Invalid link code'}
                 {linkingStatus === 'error' && '⚠️ Connection error'}
               </p>
               <p className="text-blue-800 dark:text-blue-200">
@@ -259,7 +260,7 @@ const ParentChildDetails = () => {
             {linkingStatus === 'not_found' && (
               <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                 <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  <strong>Action Required:</strong> The email <strong>{child.email}</strong> needs to create a student account at StudySpot first.
+                  <strong>Action Required:</strong> The link code <strong className="font-mono">{child.linkCode}</strong> is invalid. Please ask your child for their correct 6-digit link code.
                 </p>
               </div>
             )}
@@ -331,17 +332,17 @@ const ParentChildDetails = () => {
               No homework found
             </h3>
             <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-              Make sure <strong>{child.email}</strong> is registered as a student and has created some homework assignments.
+              <strong>{child.name}</strong> hasn't created any homework assignments yet.
             </p>
             <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg max-w-md mx-auto">
               <p className="text-sm text-blue-800 dark:text-blue-300">
-                <strong>How it works:</strong>
+                <strong>Once they create homework:</strong>
               </p>
-              <ol className="mt-2 text-sm text-blue-700 dark:text-blue-400 text-left space-y-1">
-                <li>1. Your child registers at StudySpot with <strong>{child.email}</strong></li>
-                <li>2. They create homework assignments as a student</li>
-                <li>3. You'll be able to see their progress here</li>
-              </ol>
+              <ul className="mt-2 text-sm text-blue-700 dark:text-blue-400 text-left space-y-1">
+                <li>• All their assignments will appear here</li>
+                <li>• You can track their progress in real-time</li>
+                <li>• See completion status and due dates</li>
+              </ul>
             </div>
           </div>
         ) : (

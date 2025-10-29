@@ -23,6 +23,7 @@ interface Child {
   id: string;
   name: string;
   email: string;
+  linkCode?: string; // Student's link code to connect accounts
   grade: string;
   age: number;
   avatar?: string;
@@ -67,20 +68,27 @@ const ParentChildren = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    linkCode: '',
     grade: '',
     age: '',
   });
 
   const handleAddChild = () => {
-    if (!formData.name || !formData.email || !formData.grade || !formData.age) {
-      toast.error('Please fill in all fields');
+    if (!formData.name || !formData.grade || !formData.age) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (!formData.linkCode && !formData.email) {
+      toast.error('Please enter either a link code or email');
       return;
     }
 
     const newChild: Child = {
       id: Date.now().toString(),
       name: formData.name,
-      email: formData.email,
+      email: formData.email || 'Not provided',
+      linkCode: formData.linkCode,
       grade: formData.grade,
       age: parseInt(formData.age),
       dateAdded: new Date().toISOString().split('T')[0],
@@ -105,13 +113,13 @@ const ParentChildren = () => {
     }
 
     setShowAddModal(false);
-    setFormData({ name: '', email: '', grade: '', age: '' });
+    setFormData({ name: '', email: '', linkCode: '', grade: '', age: '' });
     toast.success('Child added successfully!');
   };
 
   const handleEditChild = () => {
-    if (!selectedChild || !formData.name || !formData.email || !formData.grade || !formData.age) {
-      toast.error('Please fill in all fields');
+    if (!selectedChild || !formData.name || !formData.grade || !formData.age) {
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -120,7 +128,8 @@ const ParentChildren = () => {
         ? {
             ...child,
             name: formData.name,
-            email: formData.email,
+            email: formData.email || 'Not provided',
+            linkCode: formData.linkCode,
             grade: formData.grade,
             age: parseInt(formData.age),
           }
@@ -136,7 +145,7 @@ const ParentChildren = () => {
 
     setShowEditModal(false);
     setSelectedChild(null);
-    setFormData({ name: '', email: '', grade: '', age: '' });
+    setFormData({ name: '', email: '', linkCode: '', grade: '', age: '' });
     toast.success('Child updated successfully!');
   };
 
@@ -161,6 +170,7 @@ const ParentChildren = () => {
     setFormData({
       name: child.name,
       email: child.email,
+      linkCode: child.linkCode || '',
       grade: child.grade,
       age: child.age.toString(),
     });
@@ -330,7 +340,7 @@ const ParentChildren = () => {
               <button
                 onClick={() => {
                   setShowAddModal(false);
-                  setFormData({ name: '', email: '', grade: '', age: '' });
+                  setFormData({ name: '', email: '', linkCode: '', grade: '', age: '' });
                 }}
                 className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
@@ -354,15 +364,33 @@ const ParentChildren = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email
+                  Email (Optional)
                 </label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="child@example.com"
+                  placeholder="child@example.com (for your reference)"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Student Link Code <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.linkCode}
+                  onChange={(e) => setFormData({ ...formData, linkCode: e.target.value.toUpperCase() })}
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white font-mono text-lg focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Enter 6-digit code (e.g., ABC123)"
+                  maxLength={6}
+                  required
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Ask your child for their 6-digit link code from their profile
+                </p>
               </div>
 
               <div>
@@ -410,7 +438,7 @@ const ParentChildren = () => {
               <button
                 onClick={() => {
                   setShowAddModal(false);
-                  setFormData({ name: '', email: '', grade: '', age: '' });
+                  setFormData({ name: '', email: '', linkCode: '', grade: '', age: '' });
                 }}
                 className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
@@ -438,7 +466,7 @@ const ParentChildren = () => {
                 onClick={() => {
                   setShowEditModal(false);
                   setSelectedChild(null);
-                  setFormData({ name: '', email: '', grade: '', age: '' });
+                  setFormData({ name: '', email: '', linkCode: '', grade: '', age: '' });
                 }}
                 className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
@@ -461,14 +489,33 @@ const ParentChildren = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email
+                  Email (Optional)
                 </label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="child@example.com (for your reference)"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Student Link Code <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.linkCode}
+                  onChange={(e) => setFormData({ ...formData, linkCode: e.target.value.toUpperCase() })}
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white font-mono text-lg focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Enter 6-digit code (e.g., ABC123)"
+                  maxLength={6}
+                  required
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Ask your child for their 6-digit link code from their profile
+                </p>
               </div>
 
               <div>
@@ -516,7 +563,7 @@ const ParentChildren = () => {
                 onClick={() => {
                   setShowEditModal(false);
                   setSelectedChild(null);
-                  setFormData({ name: '', email: '', grade: '', age: '' });
+                  setFormData({ name: '', email: '', linkCode: '', grade: '', age: '' });
                 }}
                 className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >

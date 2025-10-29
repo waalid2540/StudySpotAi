@@ -24,6 +24,7 @@ import {
 import toast from 'react-hot-toast';
 import { TutorCharacterBuilder } from '../components/TutorCharacterBuilder';
 import { TutorCharacter } from '../types/tutorCharacter';
+import { StudentLinkCode } from '../components/StudentLinkCode';
 
 interface UserProfile {
   name: string;
@@ -308,7 +309,13 @@ const ProfilePage = () => {
 
       {/* Profile Tab */}
       {activeTab === 'profile' && (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-6">
+          {/* Student Link Code - Only show for students */}
+          {user?.role === 'student' && (
+            <StudentLinkCode />
+          )}
+
+          <div className="grid gap-6 lg:grid-cols-2">
           {/* Personal Information */}
           <div className="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-xl shadow-md p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white dark:text-white mb-6">Personal Information</h2>
@@ -428,6 +435,7 @@ const ProfilePage = () => {
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </div>
       )}

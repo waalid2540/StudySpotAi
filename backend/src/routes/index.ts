@@ -85,6 +85,11 @@ router.post('/parents/link-child', authenticateUser, parentController.linkChild.
 router.get('/parents/notifications', authenticateUser, parentController.getNotifications.bind(parentController));
 
 // ============================================================
+// STUDENT LINK CODE (Protected)
+// ============================================================
+router.get('/students/link-code', authenticateUser, parentController.getStudentLinkCode.bind(parentController));
+
+// ============================================================
 // GAMIFICATION ROUTES (Protected)
 // ============================================================
 router.get('/gamification/points', authenticateUser, gamificationController.getPoints.bind(gamificationController));
