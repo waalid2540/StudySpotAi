@@ -65,6 +65,9 @@ export class User {
   @Column({ default: false })
   profile_private: boolean;
 
+  @Column({ nullable: true, length: 6, unique: true })
+  link_code: string;
+
   @CreateDateColumn()
   created_at: Date;
 

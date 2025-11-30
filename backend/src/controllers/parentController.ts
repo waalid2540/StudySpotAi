@@ -1,12 +1,10 @@
 import { Response } from 'express';
 import { aiService } from '../services/aiService';
 import { homeworkStore } from './homeworkController';
-
-// Parent-child links storage
-const childrenLinks: Map<string, string[]> = new Map();
-
-// Student link codes storage: linkCode -> studentId
-const linkCodes: Map<string, string> = new Map();
+import { emailService } from '../services/emailService';
+import { AppDataSource } from '../config/database';
+import { ParentChildLink } from '../entities/ParentChildLink';
+import { User } from '../entities/User';
 
 // Generate a random 6-character link code
 function generateLinkCode(): string {
@@ -18,23 +16,37 @@ function generateLinkCode(): string {
   return code;
 }
 
-// Get or create link code for a student
-function getOrCreateLinkCode(studentId: string): string {
-  // Check if student already has a link code
-  for (const [code, id] of linkCodes.entries()) {
-    if (id === studentId) {
-      return code;
+// Get or create link code for a student (stored in database)
+async function getOrCreateLinkCode(studentId: string): Promise<string> {
+  const userRepository = AppDataSource.getRepository(User);
+  const student = await userRepository.findOne({ where: { id: studentId } });
+
+  if (!student) {
+    throw new Error('Student not found');
+  }
+
+  // If student already has a link code, return it
+  if (student.link_code) {
+    return student.link_code;
+  }
+
+  // Generate new unique link code
+  let newCode = generateLinkCode();
+  let codeExists = true;
+
+  while (codeExists) {
+    const existingUser = await userRepository.findOne({ where: { link_code: newCode } });
+    if (!existingUser) {
+      codeExists = false;
+    } else {
+      newCode = generateLinkCode();
     }
   }
 
-  // Generate new link code
-  let newCode = generateLinkCode();
-  // Ensure code is unique
-  while (linkCodes.has(newCode)) {
-    newCode = generateLinkCode();
-  }
+  // Save the link code to the user
+  student.link_code = newCode;
+  await userRepository.save(student);
 
-  linkCodes.set(newCode, studentId);
   console.log(`Generated link code ${newCode} for student ${studentId}`);
   return newCode;
 }
@@ -46,10 +58,21 @@ export class ParentController {
   async getDashboard(req: any, res: Response): Promise<any> {
     try {
       const parentId = req.user?.userId;
-      const children = childrenLinks.get(parentId) || [];
+
+      // Get linked children from database
+      const linkRepository = AppDataSource.getRepository(ParentChildLink);
+      const userRepository = AppDataSource.getRepository(User);
+
+      const links = await linkRepository.find({
+        where: { parent_id: parentId, is_active: true },
+        relations: ['student'],
+      });
 
       // Get REAL homework for each linked child
-      const overview = children.map(childId => {
+      const overview = await Promise.all(links.map(async (link) => {
+        const childId = link.student_id;
+        const student = await userRepository.findOne({ where: { id: childId } });
+
         // Get all homework for this child
         const childHomework = Array.from(homeworkStore.values())
           .filter(hw => hw.studentId === childId);
@@ -71,16 +94,17 @@ export class ParentController {
 
         return {
           childId,
-          name: 'Student', // You can add student names later from User table
+          name: student ? `${student.first_name} ${student.last_name}` : 'Student',
+          email: student?.email,
           completedHomework,
           pendingHomework,
           totalHomework: childHomework.length,
           recentActivity,
         };
-      });
+      }));
 
       const dashboardData = {
-        totalChildren: children.length,
+        totalChildren: links.length,
         overview,
       };
 
@@ -229,57 +253,75 @@ export class ParentController {
   async linkChild(req: any, res: Response): Promise<any> {
     try {
       const parentId = req.user?.userId;
-      const { linkCode, childEmail } = req.body;
+      const { linkCode } = req.body;
 
-      let studentId: string | undefined;
-
-      // Priority 1: Link by code (preferred method)
-      if (linkCode) {
-        const upperCode = linkCode.toUpperCase();
-        studentId = linkCodes.get(upperCode);
-
-        if (!studentId) {
-          return res.status(404).json({
-            error: 'Invalid link code. Please check the code and try again.'
-          });
-        }
-
-        console.log(`✅ Linked child using code: ${upperCode} -> Student ID: ${studentId}`);
+      if (!linkCode) {
+        return res.status(400).json({ error: 'Link code is required' });
       }
-      // Fallback: Link by email (for backwards compatibility)
-      else if (childEmail) {
-        const { AppDataSource } = require('../config/database');
-        const { User } = require('../entities/User');
 
-        const userRepository = AppDataSource.getRepository(User);
-        const student = await userRepository.findOne({
-          where: { email: childEmail, role: 'student' }
+      const upperCode = linkCode.toUpperCase();
+
+      // Get repositories
+      const linkRepository = AppDataSource.getRepository(ParentChildLink);
+      const userRepository = AppDataSource.getRepository(User);
+
+      // Find student by link code in database
+      const student = await userRepository.findOne({
+        where: { link_code: upperCode }
+      });
+
+      if (!student) {
+        return res.status(404).json({
+          error: 'Invalid link code. Please check the code and try again.'
         });
+      }
 
-        if (!student) {
-          return res.status(404).json({
-            error: 'No student account found with this email. Please use the student\'s link code instead.'
-          });
+      const studentId = student.id;
+
+      // Check if link already exists
+      const existingLink = await linkRepository.findOne({
+        where: {
+          parent_id: parentId,
+          student_id: studentId,
+        }
+      });
+
+      if (existingLink) {
+        if (!existingLink.is_active) {
+          // Reactivate the link
+          existingLink.is_active = true;
+          await linkRepository.save(existingLink);
         }
 
-        studentId = student.id;
-        console.log(`✅ Linked child using email: ${childEmail} -> Student ID: ${studentId}`);
+        return res.json({
+          message: 'Child already linked',
+          student: {
+            id: student.id,
+            name: `${student.first_name} ${student.last_name}`,
+            email: student.email,
+          },
+        });
       }
 
-      if (!studentId) {
-        return res.status(400).json({ error: 'Link code or email is required' });
-      }
+      // Create new link
+      const newLink = linkRepository.create({
+        parent_id: parentId,
+        student_id: studentId,
+        link_code: upperCode,
+        is_active: true,
+      });
 
-      const children = childrenLinks.get(parentId) || [];
-      if (!children.includes(studentId)) {
-        children.push(studentId);
-        childrenLinks.set(parentId, children);
-      }
+      await linkRepository.save(newLink);
+
+      console.log(`✅ Linked child using code: ${upperCode} -> Student ID: ${studentId}`);
 
       res.json({
         message: 'Child linked successfully',
-        studentId: studentId,
-        linkedChildren: children,
+        student: {
+          id: student.id,
+          name: `${student.first_name} ${student.last_name}`,
+          email: student.email,
+        },
       });
     } catch (error: any) {
       console.error('Link Child Error:', error);
@@ -299,7 +341,7 @@ export class ParentController {
       }
 
       // Get or create link code for this student
-      const linkCode = getOrCreateLinkCode(studentId);
+      const linkCode = await getOrCreateLinkCode(studentId);
 
       res.json({
         studentId,
@@ -313,6 +355,119 @@ export class ParentController {
   }
 
   /**
+   * Send link code to parent via email
+   */
+  async sendLinkCodeEmail(req: any, res: Response): Promise<any> {
+    try {
+      const studentId = req.user?.userId;
+      const { parentEmail, studentName } = req.body;
+
+      if (!studentId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      if (!parentEmail || !studentName) {
+        return res.status(400).json({
+          error: 'Parent email and student name are required'
+        });
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(parentEmail)) {
+        return res.status(400).json({ error: 'Invalid email address' });
+      }
+
+      // Get or create link code for this student
+      const linkCode = await getOrCreateLinkCode(studentId);
+
+      // Initialize email service if not already done
+      await emailService.initialize();
+
+      // Send email
+      const result = await emailService.sendLinkCodeEmail(
+        parentEmail,
+        studentName,
+        linkCode
+      );
+
+      if (!result.success) {
+        return res.status(500).json({
+          error: result.error || 'Failed to send email'
+        });
+      }
+
+      res.json({
+        success: true,
+        message: `Link code sent to ${parentEmail}`,
+        previewUrl: result.previewUrl, // For testing with Ethereal
+      });
+    } catch (error: any) {
+      console.error('Send Link Code Email Error:', error);
+      res.status(500).json({
+        error: error.message || 'Failed to send email'
+      });
+    }
+  }
+
+  /**
+   * Get all linked children for a parent
+   */
+  async getLinkedChildren(req: any, res: Response): Promise<any> {
+    try {
+      const parentId = req.user?.userId;
+
+      // Get linked children from database
+      const linkRepository = AppDataSource.getRepository(ParentChildLink);
+      const userRepository = AppDataSource.getRepository(User);
+
+      const links = await linkRepository.find({
+        where: { parent_id: parentId, is_active: true },
+      });
+
+      const children = await Promise.all(links.map(async (link) => {
+        const student = await userRepository.findOne({ where: { id: link.student_id } });
+
+        if (!student) return null;
+
+        // Get homework stats
+        const childHomework = Array.from(homeworkStore.values())
+          .filter(hw => hw.studentId === student.id);
+
+        const completedHomework = childHomework.filter(hw => hw.status === 'completed').length;
+        const pendingHomework = childHomework.filter(hw => hw.status === 'pending').length;
+
+        return {
+          id: student.id,
+          name: `${student.first_name} ${student.last_name}`,
+          email: student.email,
+          linkCode: link.link_code,
+          linkedAt: link.linked_at,
+          stats: {
+            homeworkCompletion: childHomework.length > 0
+              ? Math.round((completedHomework / childHomework.length) * 100)
+              : 0,
+            averageScore: 0, // TODO: Calculate from actual scores
+            totalPoints: 0, // TODO: Get from gamification
+            studyTime: 0, // TODO: Track study time
+          },
+        };
+      }));
+
+      // Filter out null entries
+      const validChildren = children.filter(child => child !== null);
+
+      res.json({
+        children: validChildren,
+        total: validChildren.length,
+      });
+    } catch (error: any) {
+      console.error('Get Linked Children Error:', error);
+      res.status(500).json({ error: error.message || 'Failed to get linked children' });
+    }
+  }
+
+  /**
    * Get child's homework
    */
   async getChildHomework(req: any, res: Response): Promise<any> {
@@ -320,9 +475,17 @@ export class ParentController {
       const parentId = req.user?.userId;
       const { studentId } = req.params;
 
-      // Check if parent has access to this child
-      const children = childrenLinks.get(parentId) || [];
-      if (!children.includes(studentId)) {
+      // Check if parent has access to this child via database
+      const linkRepository = AppDataSource.getRepository(ParentChildLink);
+      const link = await linkRepository.findOne({
+        where: {
+          parent_id: parentId,
+          student_id: studentId,
+          is_active: true,
+        },
+      });
+
+      if (!link) {
         return res.status(403).json({ error: 'You do not have access to this student' });
       }
 

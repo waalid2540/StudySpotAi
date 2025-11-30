@@ -78,6 +78,7 @@ router.post('/ai/analyze-image', authenticateUser, aiController.analyzeImage.bin
 // PARENT MONITORING ROUTES (Protected)
 // ============================================================
 router.get('/parents/dashboard', authenticateUser, parentController.getDashboard.bind(parentController));
+router.get('/parents/children', authenticateUser, parentController.getLinkedChildren.bind(parentController));
 router.get('/parents/insights/:studentId', authenticateUser, parentController.getStudentInsights.bind(parentController));
 router.get('/parents/reports/:studentId', authenticateUser, parentController.getProgressReports.bind(parentController));
 router.get('/parents/homework/:studentId', authenticateUser, parentController.getChildHomework.bind(parentController));
@@ -88,6 +89,7 @@ router.get('/parents/notifications', authenticateUser, parentController.getNotif
 // STUDENT LINK CODE (Protected)
 // ============================================================
 router.get('/students/link-code', authenticateUser, parentController.getStudentLinkCode.bind(parentController));
+router.post('/students/send-link-code', authenticateUser, parentController.sendLinkCodeEmail.bind(parentController));
 
 // ============================================================
 // GAMIFICATION ROUTES (Protected)

@@ -18,6 +18,7 @@ import {
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { storageService } from '../../services/storageService';
+import { parentAPI } from '../../services/api';
 
 interface Child {
   id: string;
@@ -42,24 +43,44 @@ const ParentChildren = () => {
   const navigate = useNavigate();
   const [children, setChildren] = useState<Child[]>([]);
 
-  // Load children from localStorage on mount
+  // Load children from database on mount
   useEffect(() => {
-    if (user?.id) {
-      const savedChildren = storageService.get<Child[]>(`parent_children_${user.id}`, []);
-      console.log('Loading children for user:', user.id, savedChildren);
-      if (savedChildren && savedChildren.length > 0) {
-        setChildren(savedChildren);
+    const fetchChildren = async () => {
+      try {
+        const response = await parentAPI.getChildren();
+        console.log('Loaded children from API:', response.data);
+
+        if (response.data && response.data.children) {
+          // Transform API data to match our Child interface
+          const transformedChildren: Child[] = response.data.children.map((child: any) => ({
+            id: child.id,
+            name: child.name,
+            email: child.email,
+            linkCode: child.linkCode,
+            grade: '',  // Not provided by API yet
+            age: 0,  // Not provided by API yet
+            dateAdded: new Date(child.linkedAt).toISOString().split('T')[0],
+            status: 'active',
+            stats: {
+              homeworkCompletion: child.stats?.homeworkCompletion || 0,
+              averageScore: child.stats?.averageScore || 0,
+              totalPoints: child.stats?.totalPoints || 0,
+              studyTime: child.stats?.studyTime || 0,
+            },
+          }));
+
+          setChildren(transformedChildren);
+        }
+      } catch (error) {
+        console.error('Failed to load children:', error);
+        toast.error('Failed to load children');
       }
+    };
+
+    if (user?.id) {
+      fetchChildren();
     }
   }, [user?.id]);
-
-  // Save children to localStorage whenever it changes
-  useEffect(() => {
-    if (user?.id) {
-      console.log('Saving children for user:', user.id, children);
-      storageService.set(`parent_children_${user.id}`, children);
-    }
-  }, [children, user?.id]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -73,48 +94,50 @@ const ParentChildren = () => {
     age: '',
   });
 
-  const handleAddChild = () => {
-    if (!formData.name || !formData.grade || !formData.age) {
-      toast.error('Please fill in all required fields');
+  const handleAddChild = async () => {
+    if (!formData.linkCode) {
+      toast.error('Please enter the student link code');
       return;
     }
 
-    if (!formData.linkCode && !formData.email) {
-      toast.error('Please enter either a link code or email');
-      return;
+    try {
+      // Call backend API to link child using the link code
+      const response = await parentAPI.linkChild(formData.linkCode);
+      const { student, message } = response.data;
+
+      console.log('✅ Child linked via API:', student);
+
+      // Reload children from API to get fresh data
+      const childrenResponse = await parentAPI.getChildren();
+      if (childrenResponse.data && childrenResponse.data.children) {
+        const transformedChildren: Child[] = childrenResponse.data.children.map((child: any) => ({
+          id: child.id,
+          name: child.name,
+          email: child.email,
+          linkCode: child.linkCode,
+          grade: '',
+          age: 0,
+          dateAdded: new Date(child.linkedAt).toISOString().split('T')[0],
+          status: 'active',
+          stats: {
+            homeworkCompletion: child.stats?.homeworkCompletion || 0,
+            averageScore: child.stats?.averageScore || 0,
+            totalPoints: child.stats?.totalPoints || 0,
+            studyTime: child.stats?.studyTime || 0,
+          },
+        }));
+
+        setChildren(transformedChildren);
+      }
+
+      setShowAddModal(false);
+      setFormData({ name: '', email: '', linkCode: '', grade: '', age: '' });
+      toast.success(message || 'Child linked successfully!');
+    } catch (error: any) {
+      console.error('Failed to link child:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to link child. Please check the code and try again.';
+      toast.error(errorMessage);
     }
-
-    const newChild: Child = {
-      id: Date.now().toString(),
-      name: formData.name,
-      email: formData.email || 'Not provided',
-      linkCode: formData.linkCode,
-      grade: formData.grade,
-      age: parseInt(formData.age),
-      dateAdded: new Date().toISOString().split('T')[0],
-      status: 'active',
-      stats: {
-        homeworkCompletion: 0,
-        averageScore: 0,
-        totalPoints: 0,
-        studyTime: 0,
-      },
-    };
-
-    const updatedChildren = [...children, newChild];
-    console.log('Adding new child:', newChild);
-    console.log('Updated children array:', updatedChildren);
-    setChildren(updatedChildren);
-
-    // Explicitly save to localStorage
-    if (user?.id) {
-      storageService.set(`parent_children_${user.id}`, updatedChildren);
-      console.log('Explicitly saved children to localStorage');
-    }
-
-    setShowAddModal(false);
-    setFormData({ name: '', email: '', linkCode: '', grade: '', age: '' });
-    toast.success('Child added successfully!');
   };
 
   const handleEditChild = () => {
@@ -351,86 +374,82 @@ const ParentChildren = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Child's Name
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="Enter child's full name"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email (Optional)
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="child@example.com (for your reference)"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Student Link Code <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.linkCode}
                   onChange={(e) => setFormData({ ...formData, linkCode: e.target.value.toUpperCase() })}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white font-mono text-lg focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border-2 border-primary-300 dark:border-primary-600 bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-white font-mono text-lg focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="Enter 6-digit code (e.g., ABC123)"
                   maxLength={6}
                   required
+                  autoFocus
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Ask your child for their 6-digit link code from their profile
+                <p className="mt-2 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
+                  💡 Ask your child for their 6-digit link code from their profile page
                 </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Grade
-                </label>
-                <select
-                  value={formData.grade}
-                  onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="">Select grade</option>
-                  <option value="1st Grade">1st Grade</option>
-                  <option value="2nd Grade">2nd Grade</option>
-                  <option value="3rd Grade">3rd Grade</option>
-                  <option value="4th Grade">4th Grade</option>
-                  <option value="5th Grade">5th Grade</option>
-                  <option value="6th Grade">6th Grade</option>
-                  <option value="7th Grade">7th Grade</option>
-                  <option value="8th Grade">8th Grade</option>
-                  <option value="9th Grade">9th Grade</option>
-                  <option value="10th Grade">10th Grade</option>
-                  <option value="11th Grade">11th Grade</option>
-                  <option value="12th Grade">12th Grade</option>
-                </select>
-              </div>
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  Optional: Add additional information for your reference
+                </p>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Age
-                </label>
-                <input
-                  type="number"
-                  value={formData.age}
-                  onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="Enter age"
-                  min="5"
-                  max="18"
-                />
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Child's Name (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      placeholder="Enter child's full name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Grade (Optional)
+                    </label>
+                    <select
+                      value={formData.grade}
+                      onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="">Select grade</option>
+                      <option value="1st Grade">1st Grade</option>
+                      <option value="2nd Grade">2nd Grade</option>
+                      <option value="3rd Grade">3rd Grade</option>
+                      <option value="4th Grade">4th Grade</option>
+                      <option value="5th Grade">5th Grade</option>
+                      <option value="6th Grade">6th Grade</option>
+                      <option value="7th Grade">7th Grade</option>
+                      <option value="8th Grade">8th Grade</option>
+                      <option value="9th Grade">9th Grade</option>
+                      <option value="10th Grade">10th Grade</option>
+                      <option value="11th Grade">11th Grade</option>
+                      <option value="12th Grade">12th Grade</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Age (Optional)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.age}
+                      onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      placeholder="Enter age"
+                      min="5"
+                      max="18"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 

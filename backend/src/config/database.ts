@@ -3,6 +3,7 @@ import { config } from 'dotenv';
 import { parse } from 'pg-connection-string';
 import { User } from '../entities/User';
 import { Subscription } from '../entities/Subscription';
+import { ParentChildLink } from '../entities/ParentChildLink';
 
 config();
 
@@ -23,7 +24,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
       database: parsedConfig.database || 'learning_platform',
       synchronize: true, // Auto-create tables in production
       logging: true, // Enable logging to debug
-      entities: [User, Subscription], // Direct class imports - guaranteed to work
+      entities: [User, Subscription, ParentChildLink], // Direct class imports - guaranteed to work
       migrations: process.env.NODE_ENV === 'production'
         ? ['dist/database/migrations/**/*.js']
         : ['src/database/migrations/**/*.ts'],
@@ -46,7 +47,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
     database: process.env.DB_DATABASE || 'learning_platform',
     synchronize: true, // Auto-create tables
     logging: true,
-    entities: [User, Subscription], // Direct class imports - guaranteed to work
+    entities: [User, Subscription, ParentChildLink], // Direct class imports - guaranteed to work
     migrations: ['src/database/migrations/**/*.ts'],
     subscribers: [],
     ssl: false,

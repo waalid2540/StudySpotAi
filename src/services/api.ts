@@ -512,7 +512,7 @@ export const parentAPI = {
   getReports: (studentId: string, period?: string) =>
     api.get(`/parents/reports/${studentId}`, { params: { period } }),
 
-  linkChild: (childId: string) => api.post('/parents/link-child', { childId }),
+  linkChild: (linkCode: string) => api.post('/parents/link-child', { linkCode }),
 
   getNotifications: () => api.get('/parents/notifications'),
 
@@ -536,6 +536,10 @@ export const parentAPI = {
     }
     return api.get('/parents/children');
   },
+
+  // Send link code to parent via email
+  sendLinkCodeEmail: (parentEmail: string, studentName: string) =>
+    api.post('/students/send-link-code', { parentEmail, studentName }),
 };
 
 // Demo gamification tracking
